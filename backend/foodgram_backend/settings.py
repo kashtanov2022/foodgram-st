@@ -151,15 +151,34 @@ DJOSER = {
     'ACTIVATION_URL': '#/activate/{uid}/{token}',
     'SEND_ACTIVATION_EMAIL': False,
     'SERIALIZERS': {
-        # 'user_create': 'users.serializers.CustomUserCreateSerializer', # Определим позже
-        # 'user': 'users.serializers.UserSerializer', # Определим позже
-        # 'current_user': 'users.serializers.UserSerializer', # Определим позже
+        'user_create': 'users.serializers.CustomUserCreateSerializer',
+        'user': 'users.serializers.CustomUserSerializer', # Для /api/users/ и /api/users/{id}/
+        'current_user': 'users.serializers.CustomUserSerializer', # Для /api/users/me/
+        # 'user_delete': 'djoser.serializers.UserDeleteSerializer', # Оставляем по умолчанию
+        # 'set_password': 'djoser.serializers.SetPasswordSerializer', # Оставляем по умолчанию (или кастомизируем, если нужно)
+        # 'password_reset': 'djoser.serializers.SendEmailResetSerializer', # Оставляем по умолчанию
+        # 'password_reset_confirm': 'djoser.serializers.PasswordResetConfirmSerializer', # Оставляем по умолчанию
+        # 'subscription': 'users.serializers.UserWithRecipesSerializer', # Djoser использует 'user' для этого.
+                                                                       # Будем кастомизировать ViewSet.
     },
     'PERMISSIONS': {
-        'user_list': ['rest_framework.permissions.AllowAny'],
+        # 'activation': ['rest_framework.permissions.AllowAny'],
+        # 'password_reset': ['rest_framework.permissions.AllowAny'],
+        # 'password_reset_confirm': ['rest_framework.permissions.AllowAny'],
+        'set_password': ['rest_framework.permissions.IsAuthenticated'],
+        # 'set_username': ['rest_framework.permissions.IsAuthenticated'],
+        'user_create': ['rest_framework.permissions.AllowAny'],
+        'user_delete': ['djoser.permissions.CurrentUserOrAdmin'],
+        'user_list': ['rest_framework.permissions.AllowAny'], # По ТЗ список пользователей доступен всем
+        'user': ['rest_framework.permissions.IsAuthenticatedOrReadOnly'], # Просмотр профиля - всем, изменение - себе
+        'token_create': ['rest_framework.permissions.AllowAny'],
+        'token_destroy': ['rest_framework.permissions.IsAuthenticated'],
+        # 'subscribe': ['rest_framework.permissions.IsAuthenticated'] # Для кастомного эндпоинта подписок
     },
-    'USER_ID_FIELD': 'id', # Явно указываем поле ID для пользователя
-    'LOGIN_FIELD': 'email', # Поле для входа
+    'USER_ID_FIELD': 'id',
+    'LOGIN_FIELD': 'email',
+    'HIDE_USERS': False, # Позволяет Djoser управлять эндпоинтами /users/ и /users/{id}/
+    'LOGOUT_ON_PASSWORD_CHANGE': False, # Поведение по умолчанию, можно изменить
 }
 
 # Настройки для статических и медиа файлов (пока базовые)
