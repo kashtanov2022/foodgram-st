@@ -26,7 +26,6 @@ ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 
 # Application definition
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -37,13 +36,12 @@ INSTALLED_APPS = [
 
     # Сторонние приложения
     'rest_framework',
-    'rest_framework.authtoken', # Для токен-аутентификации DRF
-    'djoser',                   # Для управления пользователями и аутентификации
+    'rest_framework.authtoken',
+    'djoser',
 
-    # Ваши будущие приложения (пока можно не добавлять, но чтобы не забыть)
-    # 'users.apps.UsersConfig',
-    # 'recipes.apps.RecipesConfig',
-    # 'api.apps.ApiConfig',
+    # Наши приложения
+    'users.apps.UsersConfig',      # Используем AppConfig
+    'recipes.apps.RecipesConfig',  # Используем AppConfig
 ]
 
 MIDDLEWARE = [
@@ -55,6 +53,8 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+AUTH_USER_MODEL = 'users.User'
 
 ROOT_URLCONF = 'foodgram_backend.urls'
 
@@ -149,15 +149,17 @@ DJOSER = {
     'PASSWORD_RESET_CONFIRM_URL': '#/password/reset/confirm/{uid}/{token}',
     'USERNAME_RESET_CONFIRM_URL': '#/username/reset/confirm/{uid}/{token}',
     'ACTIVATION_URL': '#/activate/{uid}/{token}',
-    'SEND_ACTIVATION_EMAIL': False, # Для простоты пока отключим отправку email
+    'SEND_ACTIVATION_EMAIL': False,
     'SERIALIZERS': {
-        # 'user_create': 'your_app.serializers.CustomUserCreateSerializer', # Понадобится позже
-        # 'user': 'your_app.serializers.CustomUserSerializer', # Понадобится позже
-        # 'current_user': 'your_app.serializers.CustomUserSerializer', # Понадобится позже
+        # 'user_create': 'users.serializers.CustomUserCreateSerializer', # Определим позже
+        # 'user': 'users.serializers.UserSerializer', # Определим позже
+        # 'current_user': 'users.serializers.UserSerializer', # Определим позже
     },
-    'PERMISSIONS': { # Базовые разрешения для эндпоинтов Djoser
+    'PERMISSIONS': {
         'user_list': ['rest_framework.permissions.AllowAny'],
-    }
+    },
+    'USER_ID_FIELD': 'id', # Явно указываем поле ID для пользователя
+    'LOGIN_FIELD': 'email', # Поле для входа
 }
 
 # Настройки для статических и медиа файлов (пока базовые)
