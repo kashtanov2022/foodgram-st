@@ -10,22 +10,19 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import os
+from dotenv import load_dotenv
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+load_dotenv(os.path.join(BASE_DIR, '.env'))
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
+SECRET_KEY = os.getenv('SECRET_KEY')
+DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-u55c%z67bn*+ydwq!l$vv0hzw)ntfuizq-o4r#7)gyg7gaxpb%'
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 
 # Application definition
@@ -37,6 +34,16 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    # Сторонние приложения
+    'rest_framework',
+    'rest_framework.authtoken', # Для токен-аутентификации DRF
+    'djoser',                   # Для управления пользователями и аутентификации
+
+    # Ваши будущие приложения (пока можно не добавлять, но чтобы не забыть)
+    # 'users.apps.UsersConfig',
+    # 'recipes.apps.RecipesConfig',
+    # 'api.apps.ApiConfig',
 ]
 
 MIDDLEWARE = [
@@ -74,8 +81,12 @@ WSGI_APPLICATION = 'foodgram_backend.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': os.getenv('DB_ENGINE'),
+        'NAME': os.getenv('DB_NAME'),
+        'USER': os.getenv('DB_USER'),
+        'PASSWORD': os.getenv('DB_PASSWORD'),
+        'HOST': os.getenv('DB_HOST'),
+        'PORT': os.getenv('DB_PORT'),
     }
 }
 
@@ -120,3 +131,41 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Django REST Framework settings
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticatedOrReadOnly',
+    ],
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 6, # Как указано в ТЗ для главной страницы (постраничная пагинация)
+}
+
+# Djoser settings (пока базовые, будем дополнять)
+DJOSER = {
+    'PASSWORD_RESET_CONFIRM_URL': '#/password/reset/confirm/{uid}/{token}',
+    'USERNAME_RESET_CONFIRM_URL': '#/username/reset/confirm/{uid}/{token}',
+    'ACTIVATION_URL': '#/activate/{uid}/{token}',
+    'SEND_ACTIVATION_EMAIL': False, # Для простоты пока отключим отправку email
+    'SERIALIZERS': {
+        # 'user_create': 'your_app.serializers.CustomUserCreateSerializer', # Понадобится позже
+        # 'user': 'your_app.serializers.CustomUserSerializer', # Понадобится позже
+        # 'current_user': 'your_app.serializers.CustomUserSerializer', # Понадобится позже
+    },
+    'PERMISSIONS': { # Базовые разрешения для эндпоинтов Djoser
+        'user_list': ['rest_framework.permissions.AllowAny'],
+    }
+}
+
+# Настройки для статических и медиа файлов (пока базовые)
+STATIC_URL = '/static/'
+# STATIC_ROOT = os.path.join(BASE_DIR, 'static') # Раскомментируйте для продакшена
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Если будете использовать кастомную модель пользователя
+# AUTH_USER_MODEL = 'users.User' # Укажем это позже, когда создадим приложение users и модель
