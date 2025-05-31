@@ -6,9 +6,8 @@ from rest_framework.permissions import IsAuthenticated
 
 from .models import Follow, User
 from .serializers import (
-    CustomUserSerializer,
     UserWithRecipesSerializer,
-    SetAvatarSerializer
+    UserAvatarSerializer
 )
 # Пагинатор будет использоваться из глобальных настроек DRF
 
@@ -25,8 +24,8 @@ class CustomUserViewSet(DjoserUserViewSet):
     def get_serializer_class(self):
         if self.action == 'subscriptions':
             return UserWithRecipesSerializer  # Для списка подписок
-        if self.action == 'set_avatar':
-            return SetAvatarSerializer
+        if self.action == 'avatar':
+            return UserAvatarSerializer
         # Для остальных действий (list, retrieve, me) Djoser
         # будет использовать 'user' или 'current_user' из DJOSER['SERIALIZERS']
         return super().get_serializer_class()
@@ -34,8 +33,7 @@ class CustomUserViewSet(DjoserUserViewSet):
     def get_permissions(self):
         if self.action == 'me':
             self.permission_classes = [IsAuthenticated]
-        elif self.action in ['set_avatar', 'delete_avatar', 'subscribe',
-                             'subscriptions']:
+        elif self.action in ['avatar', 'subscribe', 'subscriptions']:
             self.permission_classes = [IsAuthenticated]
         # Для остальных (list, retrieve) используются permissions из
         # DJOSER['PERMISSIONS']
@@ -103,26 +101,31 @@ class CustomUserViewSet(DjoserUserViewSet):
 
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
-    @action(detail=False, methods=['put'], url_path='me/avatar',
-            permission_classes=[IsAuthenticated])
-    def set_avatar(self, request):
-        """Устанавливает аватар для текущего пользователя."""
+    @action(
+        detail=False,
+        methods=['put', 'delete'],
+        permission_classes=[IsAuthenticated],
+        url_path='me/avatar',
+        url_name='user-me-avatar'
+    )
+    def avatar(self, request):
+        """Устанавливает или удаляет аватар для текущего пользователя."""
         user = request.user
-        serializer = self.get_serializer(user, data=request.data,
-                                         partial=True)  # partial=True, т.к.
-        # обновляем только аватар
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        # Возвращаем сериализованный User с обновленным аватаром
-        response_serializer = CustomUserSerializer(
-            user, context={'request': request})
-        return Response(response_serializer.data, status=status.HTTP_200_OK)
-
-    @action(detail=False, methods=['delete'], url_path='me/avatar',
-            permission_classes=[IsAuthenticated])
-    def delete_avatar(self, request):
-        """Удаляет аватар текущего пользователя."""
-        user = request.user
-        if user.avatar:
-            user.avatar.delete(save=True)  # Удаляем файл и сохраняем модель
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        if request.method == 'PUT':
+            serializer = self.get_serializer(user, data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(
+                serializer.errors,
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        elif request.method == 'DELETE':
+            if user.avatar:
+                user.avatar.delete()
+                return Response(status=status.HTTP_204_NO_CONTENT)
+            return Response(
+                {"detail": "Аватар не найден."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)

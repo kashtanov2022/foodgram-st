@@ -162,13 +162,15 @@ class FollowSerializer(serializers.ModelSerializer):
         return data
 
 
-class SetAvatarSerializer(serializers.ModelSerializer):
+from drf_extra_fields.fields import Base64ImageField
+
+class UserAvatarSerializer(serializers.ModelSerializer):
     """Сериализатор для установки аватара."""
-    avatar = serializers.ImageField(required=True)  # Используем ImageField
+    avatar = Base64ImageField(
+        required=False,
+        allow_null=True
+    )
 
     class Meta:
         model = User
         fields = ('avatar',)
-
-    # Метод update будет вызван, когда мы передадим instance пользователя.
-    # Djoser не имеет встроенного эндпоинта для аватара, мы его добавим сами.
