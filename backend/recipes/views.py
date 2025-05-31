@@ -25,7 +25,8 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
     permission_classes = [permissions.AllowAny]  # Теги доступны всем
-    # Отключаем пагинацию для тегов, как указано в схеме (не было count/next/previous)
+    # Отключаем пагинацию для тегов, как указано в схеме
+    # (не было count/next/previous)
     pagination_class = None
 
 
@@ -90,7 +91,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return RecipeReadSerializer  # Для list, retrieve
 
     def perform_create(self, serializer):
-        """При создании рецепта устанавливаем автора из текущего пользователя."""
+        """При создании рецепта устанавливаем автора
+        из текущего пользователя."""
         serializer.save(author=self.request.user)
 
     # queryset для list с аннотациями is_favorited и is_in_shopping_cart
@@ -106,7 +108,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 user=user,
                 recipe=OuterRef('pk')
             )
-            # Аннотируем, есть ли рецепт в списке покупок у текущего пользователя
+            # Аннотируем, есть ли рецепт в списке покупок
+            # у текущего пользователя
             shopping_cart_subquery = ShoppingCart.objects.filter(
                 user=user,
                 recipe=OuterRef('pk')
@@ -187,7 +190,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
         user = request.user
         # Собираем все ингредиенты из рецептов в списке покупок пользователя
         ingredients_summary = {}
-        # Получаем все объекты AmountIngredient для рецептов в корзине пользователя
+        # Получаем все объекты AmountIngredient
+        # для рецептов в корзине пользователя
         items_in_cart = AmountIngredient.objects.filter(
             recipe__in_shopping_carts__user=user
         ).select_related('ingredient')

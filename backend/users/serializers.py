@@ -67,8 +67,10 @@ class UserWithRecipesSerializer(CustomUserSerializer):
                                              read_only=True)
 
     class Meta(CustomUserSerializer.Meta):
-        fields = CustomUserSerializer.Meta.fields + ('recipes',
-                                                    'recipes_count')
+        fields = CustomUserSerializer.Meta.fields + (
+            'recipes',
+            'recipes_count'
+        )
         read_only_fields = fields
 
     def get_recipes(self, obj):

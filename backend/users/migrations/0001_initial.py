@@ -20,12 +20,19 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='User',
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True,
-                                          serialize=False, verbose_name='ID')),
+                ('id', models.BigAutoField(
+                    auto_created=True,
+                    primary_key=True,
+                    serialize=False,
+                    verbose_name='ID'
+                )),
                 ('password', models.CharField(max_length=128,
                                               verbose_name='password')),
-                ('last_login', models.DateTimeField(blank=True, null=True,
-                                                   verbose_name='last login')),
+                ('last_login', models.DateTimeField(
+                    blank=True,
+                    null=True,
+                    verbose_name='last login'
+                )),
                 ('is_superuser', models.BooleanField(
                     default=False,
                     help_text='Designates that this user has all permissions '
@@ -70,9 +77,13 @@ class Migration(migrations.Migration):
                     related_name='user_set', related_query_name='user',
                     to='auth.group', verbose_name='groups')),
                 ('user_permissions', models.ManyToManyField(
-                    blank=True, help_text='Specific permissions for this user.',
-                    related_name='user_set', related_query_name='user',
-                    to='auth.permission', verbose_name='user permissions')),
+                    blank=True,
+                    help_text='Specific permissions for this user.',
+                    related_name='user_set',
+                    related_query_name='user',
+                    to='auth.permission',
+                    verbose_name='user permissions'
+                )),
             ],
             options={
                 'verbose_name': 'Пользователь',
@@ -86,8 +97,12 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Follow',
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True,
-                                          serialize=False, verbose_name='ID')),
+                ('id', models.BigAutoField(
+                    auto_created=True,
+                    primary_key=True,
+                    serialize=False,
+                    verbose_name='ID'
+                )),
                 ('created_at', models.DateTimeField(
                     auto_now_add=True, verbose_name='дата подписки')),
                 ('following', models.ForeignKey(

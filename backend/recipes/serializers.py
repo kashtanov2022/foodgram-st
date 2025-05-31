@@ -27,10 +27,12 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 
 class TagInRecipeSerializer(serializers.ModelSerializer):
-    """Сериализатор для тегов при создании/обновлении рецепта (ожидаем только ID)."""
+    """Сериализатор для тегов при создании/обновлении рецепта
+    (ожидаем только ID)."""
     # Мы будем использовать PrimaryKeyRelatedField в RecipeWriteSerializer
     # Этот сериализатор может быть не нужен, если мы просто передаем список ID.
-    # Но если бы мы хотели валидировать что-то еще в теге, он мог бы пригодиться.
+    # Но если бы мы хотели валидировать что-то еще в теге,
+    # он мог бы пригодиться.
     # Пока оставим для ясности, что теги идентифицируются по ID.
     class Meta:
         model = Tag
@@ -57,11 +59,13 @@ class RecipeReadSerializer(serializers.ModelSerializer):
     Соответствует схеме `RecipeList`.
     """
     tags = TagSerializer(many=True, read_only=True)
-    # author = CustomUserSerializer(read_only=True)  # Используем сериализатор пользователя
+    # author = CustomUserSerializer(read_only=True)
+    # Используем сериализатор пользователя
     # ingredients = IngredientInRecipeReadSerializer(
     #     many=True, read_only=True, source='recipe_ingredients'
     # )
-    # Заменил ingredients на SerializerMethodField для большей гибкости с source
+    # Заменил ingredients на SerializerMethodField
+    # для большей гибкости с source
     ingredients = serializers.SerializerMethodField(read_only=True)
     # Для отображения автора как объекта
     author = CustomUserSerializer(read_only=True)
@@ -138,7 +142,8 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         fields = (
             'ingredients', 'tags', 'image', 'name', 'text', 'cooking_time'
         )
-        # id и author не включаем, т.к. id генерируется, а author берется из запроса
+        # id и author не включаем,
+        # т.к. id генерируется, а author берется из запроса
 
     def validate_ingredients(self, ingredients_data):
         if not ingredients_data:
@@ -150,7 +155,8 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 "Ингредиенты в рецепте не должны повторяться."
             )
-        # Дополнительные валидации, если нужны (например, проверка существования
+        # Дополнительные валидации, если нужны
+        # (например, проверка существования
         # ингредиентов, хотя PrimaryKeyRelatedField это уже делает)
         return ingredients_data
 
@@ -166,7 +172,8 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         return tags_data
 
     def _create_or_update_ingredients(self, recipe, ingredients_data):
-        """Вспомогательный метод для создания/обновления ингредиентов рецепта."""
+        """Вспомогательный метод для
+        создания/обновления ингредиентов рецепта."""
         # Удаляем старые ингредиенты рецепта, если это обновление
         # AmountIngredient.objects.filter(recipe=recipe).delete()
         # Не нужно, если обновляем существующие
@@ -176,7 +183,8 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         # Однако, более корректно будет управлять связями.
 
         # Сначала удалим все текущие ингредиенты для данного рецепта,
-        # если это обновление (при создании recipe.recipe_ingredients.all() будет пуст)
+        # если это обновление (при создании
+        # recipe.recipe_ingredients.all() будет пуст)
         recipe.recipe_ingredients.all().delete()
 
         ingredient_amounts_to_create = []
@@ -229,7 +237,8 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         return instance
 
     def to_representation(self, instance):
-        """При выводе после создания/обновления используем RecipeReadSerializer."""
+        """При выводе после создания/обновления
+        используем RecipeReadSerializer."""
         request = self.context.get('request')
         return RecipeReadSerializer(
             instance, context={'request': request}

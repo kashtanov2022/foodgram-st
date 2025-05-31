@@ -13,12 +13,14 @@ class Command(BaseCommand):
     # Определим начальные теги здесь
     # Вы можете расширить этот список или изменить цвета/слаги
     DEFAULT_TAGS = [
-        {'name': 'Завтрак', 'color': '#49B64E', 'slug': 'breakfast'},  # Зеленый
+        # Зеленый
+        {'name': 'Завтрак', 'color': '#49B64E', 'slug': 'breakfast'},
         {'name': 'Обед', 'color': '#E26C2D', 'slug': 'lunch'},  # Оранжевый
         {'name': 'Ужин', 'color': '#8775D2', 'slug': 'dinner'},  # Фиолетовый
         {'name': 'Перекус', 'color': '#F0DB4F', 'slug': 'snack'},  # Желтый
         {'name': 'Десерт', 'color': '#FF69B4', 'slug': 'dessert'},  # Розовый
-        {'name': 'Выпечка', 'color': '#A52A2A', 'slug': 'baking'},  # Коричневый
+        # Коричневый
+        {'name': 'Выпечка', 'color': '#A52A2A', 'slug': 'baking'},
         {'name': 'Напитки', 'color': '#00BFFF', 'slug': 'drinks'},  # Голубой
     ]
 
@@ -46,7 +48,9 @@ class Command(BaseCommand):
             else:
                 tags_skipped_count += 1
                 # self.stdout.write(
-                #     self.style.WARNING(f'Tag "{tag.name}" already exists. Skipped.')
+                #     self.style.WARNING(
+                #         f'Tag "{tag.name}" already exists. Skipped.'
+                #     )
                 # )
         self.stdout.write(self.style.SUCCESS(
             f'Tags loading complete. Created: {tags_created_count}, '
@@ -58,7 +62,8 @@ class Command(BaseCommand):
         ingredients_file_path = os.path.join(
             settings.BASE_DIR.parent, 'data', 'ingredients.json'
         )
-        # settings.BASE_DIR указывает на папку backend/, поэтому .parent для корня проекта
+        # settings.BASE_DIR указывает на папку backend/,
+        # поэтому .parent для корня проекта
 
         if not os.path.exists(ingredients_file_path):
             self.stdout.write(
@@ -114,19 +119,25 @@ class Command(BaseCommand):
                     # Если хотите сохранить оригинальный регистр, используйте:
                     # name=name,
                     # measurement_unit=measurement_unit,
-                    # defaults={'name': name, 'measurement_unit': measurement_unit}
+                    # defaults={
+                    #     'name': name,
+                    #     'measurement_unit': measurement_unit
+                    # }
                     # Однако, это может привести к дублям типа "Соль" и "соль"
                 )
                 if created:
                     ingredients_created_count += 1
                     # self.stdout.write(
-                    #     self.style.SUCCESS(f'Ingredient "{ingredient.name}" created.')
+                    #     self.style.SUCCESS(
+                    #         f'Ingredient "{ingredient.name}" created.'
+                    #     )
                     # )
                 else:
                     ingredients_skipped_count += 1
                     # self.stdout.write(
                     #     self.style.WARNING(
-                    #         f'Ingredient "{ingredient.name}, {ingredient.measurement_unit}" '
+                    #         f'Ingredient "{ingredient.name}, '
+                    #         f'{ingredient.measurement_unit}" '
                     #         f'already exists. Skipped.'
                     #     )
                     # )
@@ -137,7 +148,8 @@ class Command(BaseCommand):
                 ingredients_errors_count += 1
 
         self.stdout.write(self.style.SUCCESS(
-            f'Ingredients loading complete. Created: {ingredients_created_count}, '
+            f'Ingredients loading complete. '
+            f'Created: {ingredients_created_count}, '
             f'Skipped (already exist): {ingredients_skipped_count}, '
             f'Errors/Invalid entries: {ingredients_errors_count}.'
         ))
