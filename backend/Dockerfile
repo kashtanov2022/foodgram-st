@@ -32,6 +32,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Копируем весь код бэкенда (из папки backend/ в корне контекста)
 COPY backend/ /app/backend/
 
+# Собираем статические файлы
+RUN python manage.py collectstatic --noinput --clear
+
 # Копируем данные для инициализации
 COPY data/ingredients.json /app/data/ingredients.json
 
