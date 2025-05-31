@@ -1,9 +1,8 @@
 from django.contrib.auth import get_user_model
-from django.db import transaction
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from rest_framework import serializers, status
 
-from recipes.models import Recipe # Для UserWithRecipes
+from recipes.models import Recipe  # Для UserWithRecipes
 from .models import Follow
 
 User = get_user_model()
@@ -16,7 +15,8 @@ class CustomUserCreateSerializer(UserCreateSerializer):
     """
     class Meta(UserCreateSerializer.Meta):
         model = User
-        fields = ('email', 'id', 'username', 'first_name', 'last_name', 'password')
+        fields = ('email', 'id', 'username', 'first_name', 'last_name',
+                  'password')
         # id будет read-only, password write-only по умолчанию в Djoser
 
     # Djoser уже обрабатывает создание пользователя и хеширование пароля,
@@ -34,9 +34,9 @@ class CustomUserSerializer(UserSerializer):
     class Meta(UserSerializer.Meta):
         model = User
         fields = ('email', 'id', 'username', 'first_name', 'last_name',
-                  'is_subscribed', 'avatar') # Добавили avatar
-        read_only_fields = ('email', 'id', 'username', 'first_name', 'last_name',
-                            'is_subscribed', 'avatar')
+                  'is_subscribed', 'avatar')  # Добавили avatar
+        read_only_fields = ('email', 'id', 'username', 'first_name',
+                            'last_name', 'is_subscribed', 'avatar')
 
     def get_is_subscribed(self, obj):
         """
@@ -63,19 +63,23 @@ class UserWithRecipesSerializer(CustomUserSerializer):
     Соответствует схеме `UserWithRecipes`.
     """
     recipes = serializers.SerializerMethodField()
-    recipes_count = serializers.IntegerField(source='recipes.count', read_only=True)
+    recipes_count = serializers.IntegerField(source='recipes.count',
+                                             read_only=True)
 
     class Meta(CustomUserSerializer.Meta):
-        fields = CustomUserSerializer.Meta.fields + ('recipes', 'recipes_count')
+        fields = CustomUserSerializer.Meta.fields + ('recipes',
+                                                      'recipes_count')
         read_only_fields = fields
 
     def get_recipes(self, obj):
         """
-        Возвращает список рецептов пользователя `obj` с учетом параметра recipes_limit.
+        Возвращает список рецептов пользователя `obj` с учетом параметра
+        recipes_limit.
         """
         request = self.context.get('request')
-        recipes_limit = request.query_params.get('recipes_limit') if request else None
-        recipes_queryset = obj.recipes.all() # Получаем все рецепты автора obj
+        recipes_limit = request.query_params.get('recipes_limit') \
+            if request else None
+        recipes_queryset = obj.recipes.all()  # Получаем все рецепты автора obj
 
         if recipes_limit:
             try:
@@ -85,7 +89,8 @@ class UserWithRecipesSerializer(CustomUserSerializer):
                 # Если recipes_limit невалидный, можно вернуть все или ничего,
                 # или обработать как ошибку. Пока возвращаем все.
                 pass
-        serializer = SubscribeRecipeMinifieldSerializer(recipes_queryset, many=True, context={'request': request})
+        serializer = SubscribeRecipeMinifieldSerializer(
+            recipes_queryset, many=True, context={'request': request})
         return serializer.data
 
 
@@ -106,44 +111,58 @@ class FollowSerializer(serializers.ModelSerializer):
     # Проще создать свой ViewSet для подписок.
 
     # Этот сериализатор будет использоваться для вывода списка подписок
-    # внутри UserWithRecipesSerializer, который соответствует CustomUserSerializer
-    # и добавляет рецепты.
-    # Поля для этого сериализатора будут определяться UserWithRecipesSerializer.
+    # внутри UserWithRecipesSerializer, который соответствует
+    # CustomUserSerializer и добавляет рецепты.
+    # Поля для этого сериализатора будут определяться
+    # UserWithRecipesSerializer.
 
-    # Если бы мы делали отдельный сериализатор для /api/users/{id}/subscribe/ (POST):
-    # following = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
+    # Если бы мы делали отдельный сериализатор для
+    # /api/users/{id}/subscribe/ (POST):
+    # following = serializers.PrimaryKeyRelatedField(
+    #     queryset=User.objects.all())
 
     class Meta:
         model = Follow
         # Поля будут зависеть от контекста использования.
-        # Djoser's subscribe endpoint вернет данные пользователя, на которого подписались,
-        # используя UserSerializer (который мы настроим как CustomUserSerializer).
-        # Для списка /api/users/subscriptions/ мы используем UserWithRecipesSerializer.
-        fields = '__all__' # Заглушка, т.к. логика подписок будет во Views
+        # Djoser's subscribe endpoint вернет данные пользователя, на которого
+        # подписались, используя UserSerializer (который мы настроим как
+        # CustomUserSerializer).
+        # Для списка /api/users/subscriptions/ мы используем
+        # UserWithRecipesSerializer.
+        fields = '__all__'  # Заглушка, т.к. логика подписок будет во Views
 
     def validate(self, data):
-        # Валидация будет происходить во View, т.к. user (подписчик) берется из request.user
+        # Валидация будет происходить во View, т.к. user (подписчик) берется
+        # из request.user
         # following (автор) берется из URL.
-        # Здесь можно добавить валидацию, если бы 'user' и 'following' передавались в теле запроса.
+        # Здесь можно добавить валидацию, если бы 'user' и 'following'
+        # передавались в теле запроса.
         user = self.context['request'].user
-        following_id = self.context['view'].kwargs.get('id') # или 'user_id' в зависимости от URL Djoser
+        following_id = self.context['view'].kwargs.get('id')
+        # или 'user_id' в зависимости от URL Djoser
 
         if not User.objects.filter(id=following_id).exists():
             # Это должно обрабатываться на уровне ViewSet (get_object_or_404)
-            raise serializers.ValidationError("Пользователь, на которого вы пытаетесь подписаться, не найден.")
+            raise serializers.ValidationError(
+                "Пользователь, на которого вы пытаетесь подписаться, "
+                "не найден.")
 
         following = User.objects.get(id=following_id)
 
         if user == following:
-            raise serializers.ValidationError({"errors": "Вы не можете подписаться на самого себя."}, code=status.HTTP_400_BAD_REQUEST)
+            raise serializers.ValidationError(
+                {"errors": "Вы не можете подписаться на самого себя."},
+                code=status.HTTP_400_BAD_REQUEST)
         if Follow.objects.filter(user=user, following=following).exists():
-            raise serializers.ValidationError({"errors": "Вы уже подписаны на этого пользователя."}, code=status.HTTP_400_BAD_REQUEST)
+            raise serializers.ValidationError(
+                {"errors": "Вы уже подписаны на этого пользователя."},
+                code=status.HTTP_400_BAD_REQUEST)
         return data
 
 
 class SetAvatarSerializer(serializers.ModelSerializer):
     """Сериализатор для установки аватара."""
-    avatar = serializers.ImageField(required=True) # Используем ImageField для валидации и сохранения
+    avatar = serializers.ImageField(required=True)  # Используем ImageField
 
     class Meta:
         model = User

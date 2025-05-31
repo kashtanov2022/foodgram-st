@@ -2,18 +2,21 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import User, Follow
 
-# Unregister the default User admin if it was registered by djoser or elsewhere without our custom admin
-# This might not be necessary if djoser doesn't auto-register a UserAdmin when AUTH_USER_MODEL is custom.
+# Unregister the default User admin if it was registered by djoser or
+# elsewhere without our custom admin
+# This might not be necessary if djoser doesn't auto-register a UserAdmin
+# when AUTH_USER_MODEL is custom.
 # try:
 #     admin.site.unregister(User)
 # except admin.sites.NotRegistered:
 #     pass
 
-@admin.register(User) # Используем декоратор для регистрации
+
+@admin.register(User)  # Используем декоратор для регистрации
 class UserAdmin(BaseUserAdmin):
     list_display = (
         'username', 'email', 'first_name', 'last_name',
-        'is_staff', 'is_active', 'get_recipes_count' # Добавим количество рецептов
+        'is_staff', 'is_active', 'get_recipes_count'  # Добавим количество
     )
     search_fields = ('username', 'email', 'first_name', 'last_name')
     list_filter = ('is_staff', 'is_superuser', 'is_active', 'groups')
@@ -38,9 +41,10 @@ class UserAdmin(BaseUserAdmin):
 @admin.register(Follow)
 class FollowAdmin(admin.ModelAdmin):
     list_display = ('id', 'user_link', 'following_link', 'created_at')
-    search_fields = ('user__username', 'following__username', 'user__email', 'following__email')
+    search_fields = ('user__username', 'following__username',
+                     'user__email', 'following__email')
     list_filter = ('created_at',)
-    autocomplete_fields = ['user', 'following'] # Удобный поиск при добавлении/редактировании
+    autocomplete_fields = ['user', 'following']  # Удобный поиск при добавлении
 
     @admin.display(description='Подписчик')
     def user_link(self, obj):

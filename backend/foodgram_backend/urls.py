@@ -21,13 +21,15 @@ from django.conf.urls.static import static
 
 from rest_framework.routers import DefaultRouter
 from users.views import CustomUserViewSet
-from recipes.views import TagViewSet, IngredientViewSet, RecipeViewSet # Добавляем RecipeViewSet
+from recipes.views import (  # Добавляем RecipeViewSet
+    TagViewSet, IngredientViewSet, RecipeViewSet
+)
 
 router_v1 = DefaultRouter()
 router_v1.register(r'users', CustomUserViewSet, basename='users')
 router_v1.register(r'tags', TagViewSet, basename='tags')
 router_v1.register(r'ingredients', IngredientViewSet, basename='ingredients')
-router_v1.register(r'recipes', RecipeViewSet, basename='recipes') # Регистрируем RecipeViewSet
+router_v1.register(r'recipes', RecipeViewSet, basename='recipes')  # Регистрируем RecipeViewSet
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -36,5 +38,9 @@ urlpatterns = [
 ]
 
 if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    urlpatterns += static(
+        settings.MEDIA_URL, document_root=settings.MEDIA_ROOT
+    )
+    urlpatterns += static(
+        settings.STATIC_URL, document_root=settings.STATIC_ROOT
+    )
