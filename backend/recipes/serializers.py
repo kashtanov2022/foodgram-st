@@ -57,14 +57,16 @@ class RecipeReadSerializer(serializers.ModelSerializer):
 
     def get_ingredients(self, obj: Recipe):
         amounts = obj.recipe_ingredients.all()
-        return IngredientInRecipeReadSerializer(amounts, many=True, context=self.context).data # Pass context if needed by nested serializer
+        return IngredientInRecipeReadSerializer(
+            amounts, many=True, context=self.context
+        ).data  # Pass context if needed by nested serializer
 
     def get_is_favorited(self, obj: Recipe):
         request = self.context.get('request')
         if not request or not request.user.is_authenticated:
             return False
         if hasattr(obj, 'is_favorited_annotated'):
-             return obj.is_favorited_annotated
+            return obj.is_favorited_annotated
         return Favorite.objects.filter(user=request.user, recipe=obj).exists()
 
     def get_is_in_shopping_cart(self, obj: Recipe):
@@ -73,7 +75,9 @@ class RecipeReadSerializer(serializers.ModelSerializer):
             return False
         if hasattr(obj, 'is_in_shopping_cart_annotated'):
             return obj.is_in_shopping_cart_annotated
-        return ShoppingCart.objects.filter(user=request.user, recipe=obj).exists()
+        return ShoppingCart.objects.filter(
+            user=request.user, recipe=obj
+        ).exists()
 
 
 class IngredientAmountWriteSerializer(serializers.ModelSerializer):
@@ -101,21 +105,17 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
     """
     Сериализатор для создания и обновления рецептов.
     """
-    image = Base64ImageField(required=True) # Image is still required
+    image = Base64ImageField(required=True)
     ingredients = IngredientAmountWriteSerializer(
         many=True,
-        allow_empty=False # At least one ingredient is required
+        allow_empty=False
     )
     tags = serializers.PrimaryKeyRelatedField(
         queryset=Tag.objects.all(),
         many=True,
-        required=False,      # <--- CHANGE 1: Make tags not strictly required for submission
-        allow_empty=True,    # <--- CHANGE 2: Allow an empty list of tags if 'tags' key is provided
-        # default=[]         # <--- CHANGE 3: (Optional but good practice) Provide a default empty list
+        required=False,
+        allow_empty=True,
     )
-    # cooking_time is implicitly required by model. If you want to make it optional
-    # on the serializer level and have a model default, you can add `required=False`
-    # cooking_time = serializers.IntegerField(min_value=1, required=True) # Default, from model
 
     class Meta:
         model = Recipe
@@ -124,7 +124,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         )
 
     def validate_ingredients(self, ingredients_data):
-        if not ingredients_data: # This check is redundant if allow_empty=False is on the field
+        if not ingredients_data:
             raise serializers.ValidationError(
                 "Список ингредиентов не может быть пустым."
             )
@@ -143,15 +143,13 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         return ingredients_data
 
     def validate_tags(self, tags_data):
-        # This validation is only called if 'tags' is present in the input data.
-        # If 'tags' is not sent by the frontend, this method won't be called for tags.
-        if tags_data: # Only validate if tags_data is not empty (it could be an empty list if allow_empty=True)
+        if tags_data:
             tag_pks = [tag.pk for tag in tags_data]
             if len(tag_pks) != len(set(tag_pks)):
                 raise serializers.ValidationError(
                     {"tags": "Теги в рецепте не должны повторяться."}
                 )
-        return tags_data # Return empty list or validated list
+        return tags_data
 
     def _set_ingredients(self, recipe, ingredients_data):
         AmountIngredient.objects.filter(recipe=recipe).delete()
@@ -169,14 +167,11 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
 
     @transaction.atomic
     def create(self, validated_data):
-        # If 'tags' is not sent by frontend, and `required=False` + `default=[]` is used on the field,
-        # validated_data['tags'] will be an empty list here.
-        # If only `required=False` is used, and 'tags' is not sent, it won't be in validated_data.
         ingredients_data = validated_data.pop('ingredients')
-        tags_data = validated_data.pop('tags', []) # Safely pop with a default empty list
+        tags_data = validated_data.pop('tags', [])
 
-        recipe = Recipe.objects.create(**validated_data) # author will be injected by view
-        if tags_data: # Only set tags if they were provided and are not empty
+        recipe = Recipe.objects.create(**validated_data)
+        if tags_data:
             recipe.tags.set(tags_data)
         self._set_ingredients(recipe, ingredients_data)
         return recipe
@@ -184,17 +179,20 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
     @transaction.atomic
     def update(self, instance, validated_data):
         ingredients_data = validated_data.pop('ingredients', None)
-        tags_data = validated_data.pop('tags', None) # `None` indicates field wasn't in PATCH request
+        tags_data = validated_data.pop('tags', None)
 
         instance.name = validated_data.get('name', instance.name)
         instance.text = validated_data.get('text', instance.text)
-        instance.cooking_time = validated_data.get('cooking_time', instance.cooking_time)
+        instance.cooking_time = validated_data.get(
+            'cooking_time',
+            instance.cooking_tim
+        )
         if 'image' in validated_data:
             instance.image = validated_data.get('image', instance.image)
         instance.save()
 
-        if tags_data is not None: # If 'tags' was part of the request payload
-            instance.tags.set(tags_data) # This will clear tags if tags_data is an empty list
+        if tags_data is not None:
+            instance.tags.set(tags_data)
 
         if ingredients_data is not None:
             self._set_ingredients(instance, ingredients_data)

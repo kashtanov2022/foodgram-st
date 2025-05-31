@@ -233,4 +233,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         
         full_frontend_url = request.build_absolute_uri(frontend_path)
         
-        return Response({'short-link': full_frontend_url}, status=status.HTTP_200_OK)
+        return Response(
+            {'short-link': full_frontend_url},
+            status=status.HTTP_200_OK
+        )

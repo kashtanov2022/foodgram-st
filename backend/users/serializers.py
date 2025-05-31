@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from djoser.serializers import UserCreateSerializer, UserSerializer
+from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers, status
 
 from recipes.models import Recipe  # Для UserWithRecipes
@@ -161,8 +162,6 @@ class FollowSerializer(serializers.ModelSerializer):
                 code=status.HTTP_400_BAD_REQUEST)
         return data
 
-
-from drf_extra_fields.fields import Base64ImageField
 
 class UserAvatarSerializer(serializers.ModelSerializer):
     """Сериализатор для установки аватара."""
