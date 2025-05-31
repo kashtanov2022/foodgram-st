@@ -136,7 +136,7 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.TokenAuthentication',
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 6,  # Как указано в ТЗ для главной страницы (постраничная пагинация)
+    'PAGE_SIZE': 6, # Как указано в ТЗ для главной страницы (постраничная пагинация)
 }
 
 # Djoser settings (пока базовые, будем дополнять)
@@ -147,8 +147,8 @@ DJOSER = {
     'SEND_ACTIVATION_EMAIL': False,
     'SERIALIZERS': {
         'user_create': 'users.serializers.CustomUserCreateSerializer',
-        'user': 'users.serializers.CustomUserSerializer',  # Для /api/users/ и /api/users/{id}/
-        'current_user': 'users.serializers.CustomUserSerializer',  # Для /api/users/me/
+        'user': 'users.serializers.CustomUserSerializer', # Для /api/users/ и /api/users/{id}/
+        'current_user': 'users.serializers.CustomUserSerializer', # Для /api/users/me/
         # 'user_delete': 'djoser.serializers.UserDeleteSerializer', # Оставляем по умолчанию
         # 'set_password': 'djoser.serializers.SetPasswordSerializer', # Оставляем по умолчанию (или кастомизируем, если нужно)
         # 'password_reset': 'djoser.serializers.SendEmailResetSerializer', # Оставляем по умолчанию
@@ -164,16 +164,16 @@ DJOSER = {
         # 'set_username': ['rest_framework.permissions.IsAuthenticated'],
         'user_create': ['rest_framework.permissions.AllowAny'],
         'user_delete': ['djoser.permissions.CurrentUserOrAdmin'],
-        'user_list': ['rest_framework.permissions.AllowAny'],  # По ТЗ список пользователей доступен всем
-        'user': ['rest_framework.permissions.IsAuthenticatedOrReadOnly'],  # Просмотр профиля - всем, изменение - себе
+        'user_list': ['rest_framework.permissions.AllowAny'], # По ТЗ список пользователей доступен всем
+        'user': ['rest_framework.permissions.IsAuthenticatedOrReadOnly'], # Просмотр профиля - всем, изменение - себе
         'token_create': ['rest_framework.permissions.AllowAny'],
         'token_destroy': ['rest_framework.permissions.IsAuthenticated'],
         # 'subscribe': ['rest_framework.permissions.IsAuthenticated'] # Для кастомного эндпоинта подписок
     },
     'USER_ID_FIELD': 'id',
     'LOGIN_FIELD': 'email',
-    'HIDE_USERS': False,  # Позволяет Djoser управлять эндпоинтами /users/ и /users/{id}/
-    'LOGOUT_ON_PASSWORD_CHANGE': False,  # Поведение по умолчанию, можно изменить
+    'HIDE_USERS': False, # Позволяет Djoser управлять эндпоинтами /users/ и /users/{id}/
+    'LOGOUT_ON_PASSWORD_CHANGE': False, # Поведение по умолчанию, можно изменить
 }
 
 # Настройки для статических и медиа файлов (пока базовые)
@@ -184,4 +184,4 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media_volume')
 
 # Если будете использовать кастомную модель пользователя
-# AUTH_USER_MODEL = 'users.User'  # Укажем это позже, когда создадим приложение users и модель
+# AUTH_USER_MODEL = 'users.User' # Укажем это позже, когда создадим приложение users и модель
