@@ -20,7 +20,10 @@ class User(AbstractUser):
         validators=[
             RegexValidator(
                 regex=r'^[\w.@+-]+\Z',
-                message='Имя пользователя может содержать только буквы, цифры и символы @/./+/-/_.'
+                message=(
+                    'Имя пользователя может содержать только буквы, '
+                    'цифры и символы @/./+/-/_.'
+                )
             ),
         ]
     )
@@ -84,3 +87,4 @@ class Follow(models.Model):
 
     def __str__(self):
         return f'{self.user} подписан на {self.following}'
+        

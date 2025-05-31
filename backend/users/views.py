@@ -1,6 +1,6 @@
-from django.shortcuts import get_object_or_404
+# from django.shortcuts import get_object_or_404
 from djoser.views import UserViewSet as DjoserUserViewSet
-from rest_framework import status, viewsets, permissions
+from rest_framework import status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -14,6 +14,8 @@ from .serializers import (
 # Пагинатор будет использоваться из глобальных настроек DRF
 
 class CustomUserViewSet(DjoserUserViewSet):
+
+
     """
     Кастомный ViewSet для пользователей, наследуется от Djoser.
     Переопределяем queryset и сериализаторы, добавляем эндпоинты
@@ -24,7 +26,7 @@ class CustomUserViewSet(DjoserUserViewSet):
 
     def get_serializer_class(self):
         if self.action == 'subscriptions':
-            return UserWithRecipesSerializer # Для списка подписок
+            return UserWithRecipesSerializer  # Для списка подписок
         if self.action == 'set_avatar':
             return SetAvatarSerializer
         # Для остальных действий (list, retrieve, me) Djoser
@@ -46,7 +48,7 @@ class CustomUserViewSet(DjoserUserViewSet):
         Возвращает пользователей, на которых подписан текущий пользователь.
         """
         user = request.user
-        followed_users = User.objects.filter(following__user=user) # Пользователи, на которых подписан user
+        followed_users = User.objects.filter(following__user=user)  # Пользователи, на которых подписан user
 
         page = self.paginate_queryset(followed_users)
         if page is not None:
@@ -61,7 +63,7 @@ class CustomUserViewSet(DjoserUserViewSet):
         """
         Подписывает или отписывает текущего пользователя на/от пользователя с id.
         """
-        user_to_follow = self.get_object() # Используем get_object() из DjoserUserViewSet, который берет юзера по id из URL
+        user_to_follow = self.get_object()  # Используем get_object() из DjoserUserViewSet, который берет юзера по id из URL
         current_user = request.user
 
         if current_user == user_to_follow:
@@ -77,7 +79,7 @@ class CustomUserViewSet(DjoserUserViewSet):
                     status=status.HTTP_400_BAD_REQUEST
                 )
             Follow.objects.create(user=current_user, following=user_to_follow)
-            serializer = UserWithRecipesSerializer(user_to_follow, context={'request': request}) # Возвращаем данные о пользователе, на которого подписались
+            serializer = UserWithRecipesSerializer(user_to_follow, context={'request': request})  # Возвращаем данные о пользователе, на котором подписались
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         elif request.method == 'DELETE':
@@ -97,7 +99,7 @@ class CustomUserViewSet(DjoserUserViewSet):
     def set_avatar(self, request):
         """Устанавливает аватар для текущего пользователя."""
         user = request.user
-        serializer = self.get_serializer(user, data=request.data, partial=True) # partial=True, т.к. обновляем только аватар
+        serializer = self.get_serializer(user, data=request.data, partial=True)  # partial=True, т.к. обновляем только аватар
         serializer.is_valid(raise_exception=True)
         serializer.save()
         # Возвращаем сериализованный User с обновленным аватаром

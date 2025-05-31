@@ -21,13 +21,13 @@ from django.conf.urls.static import static
 
 from rest_framework.routers import DefaultRouter
 from users.views import CustomUserViewSet
-from recipes.views import TagViewSet, IngredientViewSet, RecipeViewSet # Добавляем RecipeViewSet
+from recipes.views import TagViewSet, IngredientViewSet, RecipeViewSet  # Добавляем RecipeViewSet
 
 router_v1 = DefaultRouter()
 router_v1.register(r'users', CustomUserViewSet, basename='users')
 router_v1.register(r'tags', TagViewSet, basename='tags')
 router_v1.register(r'ingredients', IngredientViewSet, basename='ingredients')
-router_v1.register(r'recipes', RecipeViewSet, basename='recipes') # Регистрируем RecipeViewSet
+router_v1.register(r'recipes', RecipeViewSet, basename='recipes')  # Регистрируем RecipeViewSet
 
 urlpatterns = [
     path('admin/', admin.site.urls),

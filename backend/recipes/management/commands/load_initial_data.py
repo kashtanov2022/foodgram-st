@@ -3,7 +3,7 @@ import os
 
 from django.core.management.base import BaseCommand
 from django.conf import settings
-from recipes.models import Ingredient, Tag # Убедитесь, что модели импортируются правильно
+from recipes.models import Ingredient, Tag  # Убедитесь, что модели импортируются правильно
 
 
 class Command(BaseCommand):
@@ -12,7 +12,7 @@ class Command(BaseCommand):
     # Определим начальные теги здесь
     # Вы можете расширить этот список или изменить цвета/слаги
     DEFAULT_TAGS = [
-        {'name': 'Завтрак', 'color': '#49B64E', 'slug': 'breakfast'}, # Зеленый
+        {'name': 'Завтрак', 'color': '#49B64E', 'slug': 'breakfast'},  # Зеленый
         {'name': 'Обед', 'color': '#E26C2D', 'slug': 'lunch'},       # Оранжевый
         {'name': 'Ужин', 'color': '#8775D2', 'slug': 'dinner'},      # Фиолетовый
         {'name': 'Перекус', 'color': '#F0DB4F', 'slug': 'snack'},     # Желтый
@@ -76,13 +76,13 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.WARNING(
                     f'Skipping ingredient due to missing name or measurement_unit: {item}'
                 ))
-                ingredients_errors_count +=1
+                ingredients_errors_count += 1
                 continue
 
             try:
                 ingredient, created = Ingredient.objects.get_or_create(
-                    name=name.lower(), # Приводим имя к нижнему регистру для большей уникальности
-                    measurement_unit=measurement_unit.lower(), # и единицу измерения тоже
+                    name=name.lower(),  # Приводим имя к нижнему регистру для большей уникальности
+                    measurement_unit=measurement_unit.lower(),  # и единицу измерения тоже
                     # Если хотите сохранить оригинальный регистр, используйте:
                     # name=name,
                     # measurement_unit=measurement_unit,

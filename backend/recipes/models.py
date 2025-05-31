@@ -4,7 +4,7 @@ from django.db import models
 # Импортируем кастомную модель User из приложения users
 # Убедитесь, что приложение users будет выше recipes в INSTALLED_APPS
 # или используйте settings.AUTH_USER_MODEL
-from users.models import User # Или используйте get_user_model позже
+from users.models import User  # Или используйте get_user_model позже
 
 
 class Tag(models.Model):
@@ -21,7 +21,8 @@ class Tag(models.Model):
         validators=[
             RegexValidator(
                 regex=r'^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$',
-                message='Введите корректный HEX-код цвета (например, #RRGGBB или #RGB).'
+                message=('Введите корректный HEX-код цвета '
+                         '(например, #RRGGBB или #RGB).')
             )
         ],
         help_text='Цвет в формате HEX (например, #49B64E)'
@@ -69,7 +70,7 @@ class Ingredient(models.Model):
 class Recipe(models.Model):
     """Модель рецепта."""
     author = models.ForeignKey(
-        User, # Используем импортированную модель User
+        User,  # Используем импортированную модель User
         on_delete=models.CASCADE,
         related_name='recipes',
         verbose_name='Автор рецепта'
@@ -143,13 +144,14 @@ class AmountIngredient(models.Model):
         ]
 
     def __str__(self):
-        return f'{self.ingredient.name} ({self.amount} {self.ingredient.measurement_unit}) в "{self.recipe.name}"'
+        return (f'{self.ingredient.name} ({self.amount} '
+                f'{self.ingredient.measurement_unit}) в "{self.recipe.name}"')
 
 
 class Favorite(models.Model):
     """Модель для избранных рецептов пользователя."""
     user = models.ForeignKey(
-        User, # Используем импортированную модель User
+        User,  # Используем импортированную модель User
         on_delete=models.CASCADE,
         related_name='favorites',
         verbose_name='Пользователь'
@@ -181,7 +183,7 @@ class Favorite(models.Model):
 class ShoppingCart(models.Model):
     """Модель для списка покупок пользователя."""
     user = models.ForeignKey(
-        User, # Используем импортированную модель User
+        User,  # Используем импортированную модель User
         on_delete=models.CASCADE,
         related_name='shopping_cart',
         verbose_name='Пользователь'
