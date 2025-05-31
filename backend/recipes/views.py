@@ -219,7 +219,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             'attachment; filename="shopping_list.txt"'
         )
         return response
-    
+
     @action(
         detail=True,
         methods=['get'],
@@ -228,11 +228,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
     )
     def copy_link(self, request, pk=None):
         recipe = self.get_object()
-        
+
         frontend_path = f'/recipes/{recipe.id}/'
-        
+
         full_frontend_url = request.build_absolute_uri(frontend_path)
-        
+
         return Response(
             {'short-link': full_frontend_url},
             status=status.HTTP_200_OK

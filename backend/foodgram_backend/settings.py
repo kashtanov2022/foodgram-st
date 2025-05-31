@@ -178,7 +178,7 @@ DJOSER = {
 
 # Настройки для статических и медиа файлов (пока базовые)
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles') # Раскомментируйте для продакшена
+STATIC_ROOT = os.path.join(BASE_DIR,  'staticfiles')  # Раскомментируйте для продакшена
 
 
 MEDIA_URL = '/media/'
