@@ -25,7 +25,8 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
     permission_classes = [permissions.AllowAny]  # Теги доступны всем
-    pagination_class = None  # Отключаем пагинацию для тегов, как указано в схеме (не было count/next/previous)
+    # Отключаем пагинацию для тегов, как указано в схеме (не было count/next/previous)
+    pagination_class = None
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
@@ -37,16 +38,20 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     permission_classes = [permissions.AllowAny]  # Ингредиенты доступны всем
-    pagination_class = None  # Отключаем пагинацию для ингредиентов, как указано в схеме
+    # Отключаем пагинацию для ингредиентов, как указано в схеме
+    pagination_class = None
 
     # Настройка поиска
     # Для простого поиска по началу имени можно использовать SearchFilter.
     # filter_backends = [filters.SearchFilter]
-    # search_fields = ['^name']  # ^ - поиск по началу строки, регистронезависимый по умолчанию
+    # ^ - поиск по началу строки, регистронезависимый по умолчанию
+    # search_fields = ['^name']
 
-    # Или, для большей гибкости и точного соответствия ТЗ (поиск по частичному вхождению в начале названия),
+    # Или, для большей гибкости и точного соответствия ТЗ
+    # (поиск по частичному вхождению в начале названия),
     # можно создать кастомный фильтр или переопределить get_queryset.
-    # "Поиск по частичному вхождению в начале названия ингредиента." (openapi-schema.yml)
+    # "Поиск по частичному вхождению в начале названия ингредиента."
+    # (openapi-schema.yml)
     # Django ORM's `istartswith` подходит для этого.
 
     def get_queryset(self):
@@ -66,17 +71,21 @@ class RecipeViewSet(viewsets.ModelViewSet):
     ViewSet для управления рецептами.
     """
     queryset = Recipe.objects.all()
-    # serializer_class = RecipeReadSerializer  # Определим в get_serializer_class
-    permission_classes = [IsAuthorOrReadOnly]  # По умолчанию, автор или только чтение
+    # Определим в get_serializer_class
+    # serializer_class = RecipeReadSerializer
+    # По умолчанию, автор или только чтение
+    permission_classes = [IsAuthorOrReadOnly]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_class = RecipeFilter  # Используем кастомный фильтр
-    ordering_fields = ['pub_date', 'name']  # Поля, по которым можно сортировать
+    # Поля, по которым можно сортировать
+    ordering_fields = ['pub_date', 'name']
     ordering = ['-pub_date']  # Сортировка по умолчанию
 
     def get_serializer_class(self):
         if self.action in ['create', 'update', 'partial_update']:
             return RecipeWriteSerializer
-        if self.action in ['favorite', 'shopping_cart']:  # Для ответа на эти действия
+        # Для ответа на эти действия
+        if self.action in ['favorite', 'shopping_cart']:
             return RecipeMinifiedSerializer
         return RecipeReadSerializer  # Для list, retrieve
 
@@ -124,7 +133,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_400_BAD_REQUEST
                 )
             Favorite.objects.create(user=user, recipe=recipe)
-            serializer = self.get_serializer(recipe)  # RecipeMinifiedSerializer
+            # RecipeMinifiedSerializer
+            serializer = self.get_serializer(recipe)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         elif request.method == 'DELETE':
@@ -137,7 +147,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
             favorite_entry.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
 
     @action(
         detail=True, methods=['post', 'delete'],
@@ -155,7 +164,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_400_BAD_REQUEST
                 )
             ShoppingCart.objects.create(user=user, recipe=recipe)
-            serializer = self.get_serializer(recipe)  # RecipeMinifiedSerializer
+            # RecipeMinifiedSerializer
+            serializer = self.get_serializer(recipe)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         elif request.method == 'DELETE':
@@ -168,7 +178,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
             cart_entry.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
 
     @action(
         detail=False, methods=['get'], permission_classes=[IsAuthenticated]

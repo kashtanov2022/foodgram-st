@@ -3,7 +3,8 @@ import os
 
 from django.core.management.base import BaseCommand
 from django.conf import settings
-from recipes.models import Ingredient, Tag  # Убедитесь, что модели импортируются правильно
+# Убедитесь, что модели импортируются правильно
+from recipes.models import Ingredient, Tag
 
 
 class Command(BaseCommand):
@@ -44,7 +45,9 @@ class Command(BaseCommand):
                 )
             else:
                 tags_skipped_count += 1
-                # self.stdout.write(self.style.WARNING(f'Tag "{tag.name}" already exists. Skipped.'))
+                # self.stdout.write(
+                #     self.style.WARNING(f'Tag "{tag.name}" already exists. Skipped.')
+                # )
         self.stdout.write(self.style.SUCCESS(
             f'Tags loading complete. Created: {tags_created_count}, '
             f'Skipped: {tags_skipped_count}.'
@@ -55,7 +58,7 @@ class Command(BaseCommand):
         ingredients_file_path = os.path.join(
             settings.BASE_DIR.parent, 'data', 'ingredients.json'
         )
-        # settings.BASE_DIR у нас указывает на папку backend/, поэтому .parent для корня проекта
+        # settings.BASE_DIR указывает на папку backend/, поэтому .parent для корня проекта
 
         if not os.path.exists(ingredients_file_path):
             self.stdout.write(
@@ -104,8 +107,10 @@ class Command(BaseCommand):
 
             try:
                 ingredient, created = Ingredient.objects.get_or_create(
-                    name=name.lower(),  # Приводим имя к нижнему регистру для большей уникальности
-                    measurement_unit=measurement_unit.lower(),  # и единицу измерения тоже
+                    # Приводим имя к нижнему регистру для большей уникальности
+                    name=name.lower(),
+                    # и единицу измерения тоже
+                    measurement_unit=measurement_unit.lower(),
                     # Если хотите сохранить оригинальный регистр, используйте:
                     # name=name,
                     # measurement_unit=measurement_unit,
@@ -114,10 +119,17 @@ class Command(BaseCommand):
                 )
                 if created:
                     ingredients_created_count += 1
-                    # self.stdout.write(self.style.SUCCESS(f'Ingredient "{ingredient.name}" created.'))
+                    # self.stdout.write(
+                    #     self.style.SUCCESS(f'Ingredient "{ingredient.name}" created.')
+                    # )
                 else:
                     ingredients_skipped_count += 1
-                    # self.stdout.write(self.style.WARNING(f'Ingredient "{ingredient.name}, {ingredient.measurement_unit}" already exists. Skipped.'))
+                    # self.stdout.write(
+                    #     self.style.WARNING(
+                    #         f'Ingredient "{ingredient.name}, {ingredient.measurement_unit}" '
+                    #         f'already exists. Skipped.'
+                    #     )
+                    # )
             except Exception as e:
                 self.stdout.write(self.style.ERROR(
                     f'Error creating ingredient "{name}": {e}'

@@ -1,5 +1,6 @@
 from django.contrib import admin
-from django.db.models import Count  # Для аннотации количества добавлений в избранное
+# Для аннотации количества добавлений в избранное
+from django.db.models import Count
 from django.urls import reverse
 from django.utils.html import format_html
 
@@ -80,7 +81,8 @@ class RecipeAdmin(admin.ModelAdmin):
 
     @admin.display(description='В избранном (на странице рецепта)')
     def get_favorites_count_display(self, obj):
-        # Это поле будет использоваться в readonly_fields на странице редактирования
+        # Это поле будет использоваться в readonly_fields
+        # на странице редактирования
         return Favorite.objects.filter(recipe=obj).count()
 
     get_favorites_count_display.short_description = (

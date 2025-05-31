@@ -26,7 +26,8 @@ class RecipeFilter(django_filters.FilterSet):
 
     class Meta:
         model = Recipe
-        fields = ['author', 'tags']  # 'is_favorited' и 'is_in_shopping_cart' обрабатываются методами
+        fields = ['author', 'tags']
+        # 'is_favorited' и 'is_in_shopping_cart' обрабатываются методами
 
     def filter_is_favorited(self, queryset, name, value):
         user = self.request.user

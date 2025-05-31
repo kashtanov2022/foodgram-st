@@ -21,11 +21,11 @@ class Migration(migrations.Migration):
             name='User',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True,
-                                           serialize=False, verbose_name='ID')),
+                                          serialize=False, verbose_name='ID')),
                 ('password', models.CharField(max_length=128,
                                               verbose_name='password')),
                 ('last_login', models.DateTimeField(blank=True, null=True,
-                                                    verbose_name='last login')),
+                                                   verbose_name='last login')),
                 ('is_superuser', models.BooleanField(
                     default=False,
                     help_text='Designates that this user has all permissions '
@@ -87,7 +87,7 @@ class Migration(migrations.Migration):
             name='Follow',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True,
-                                           serialize=False, verbose_name='ID')),
+                                          serialize=False, verbose_name='ID')),
                 ('created_at', models.DateTimeField(
                     auto_now_add=True, verbose_name='дата подписки')),
                 ('following', models.ForeignKey(

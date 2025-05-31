@@ -1,5 +1,5 @@
 from djoser.views import UserViewSet as DjoserUserViewSet
-from rest_framework import status, permissions
+from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -114,8 +114,8 @@ class CustomUserViewSet(DjoserUserViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         # Возвращаем сериализованный User с обновленным аватаром
-        response_serializer = CustomUserSerializer(user,
-                                                   context={'request': request})
+        response_serializer = CustomUserSerializer(
+            user, context={'request': request})
         return Response(response_serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['delete'], url_path='me/avatar',

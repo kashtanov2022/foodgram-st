@@ -1,6 +1,7 @@
 from django.db import transaction
 from rest_framework import serializers
-from drf_extra_fields.fields import Base64ImageField  # Установим эту библиотеку
+# Установим эту библиотеку
+from drf_extra_fields.fields import Base64ImageField
 
 # Импортируем существующие модели и сериализаторы
 from .models import (
@@ -23,7 +24,6 @@ class IngredientSerializer(serializers.ModelSerializer):
         model = Ingredient
         fields = ('id', 'name', 'measurement_unit')
         read_only_fields = fields  # Все поля только для чтения для этого API
-
 
 
 class TagInRecipeSerializer(serializers.ModelSerializer):
@@ -58,10 +58,13 @@ class RecipeReadSerializer(serializers.ModelSerializer):
     """
     tags = TagSerializer(many=True, read_only=True)
     # author = CustomUserSerializer(read_only=True)  # Используем сериализатор пользователя
-    # ingredients = IngredientInRecipeReadSerializer(many=True, read_only=True, source='recipe_ingredients')
+    # ingredients = IngredientInRecipeReadSerializer(
+    #     many=True, read_only=True, source='recipe_ingredients'
+    # )
     # Заменил ingredients на SerializerMethodField для большей гибкости с source
     ingredients = serializers.SerializerMethodField(read_only=True)
-    author = CustomUserSerializer(read_only=True)  # Для отображения автора как объекта
+    # Для отображения автора как объекта
+    author = CustomUserSerializer(read_only=True)
 
     is_favorited = serializers.SerializerMethodField(read_only=True)
     is_in_shopping_cart = serializers.SerializerMethodField(read_only=True)
@@ -116,8 +119,10 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
     Сериализатор для создания и обновления рецептов.
     Соответствует схемам `RecipeCreate` и `RecipeUpdate`.
     """
-    # image = serializers.ImageField(use_url=True)  # Стандартный ImageField не работает с base64
-    image = Base64ImageField(required=True)  # Используем drf_extra_fields для base64
+    # Стандартный ImageField не работает с base64
+    # image = serializers.ImageField(use_url=True)
+    # Используем drf_extra_fields для base64
+    image = Base64ImageField(required=True)
     ingredients = IngredientAmountWriteSerializer(
         many=True, allow_empty=False
     )
@@ -145,8 +150,8 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 "Ингредиенты в рецепте не должны повторяться."
             )
-        # Дополнительные валидации, если нужны (например, проверка существования ингредиентов,
-        # хотя PrimaryKeyRelatedField это уже делает)
+        # Дополнительные валидации, если нужны (например, проверка существования
+        # ингредиентов, хотя PrimaryKeyRelatedField это уже делает)
         return ingredients_data
 
     def validate_tags(self, tags_data):
@@ -163,13 +168,15 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
     def _create_or_update_ingredients(self, recipe, ingredients_data):
         """Вспомогательный метод для создания/обновления ингредиентов рецепта."""
         # Удаляем старые ингредиенты рецепта, если это обновление
-        # AmountIngredient.objects.filter(recipe=recipe).delete()  # Не нужно, если обновляем существующие
+        # AmountIngredient.objects.filter(recipe=recipe).delete()
+        # Не нужно, если обновляем существующие
         # Лучше обновить существующие или удалить/создать только изменившиеся.
-        # Но для простоты реализации (и если порядок не важен), можно удалить и создать заново.
+        # Но для простоты реализации (и если порядок не важен),
+        # можно удалить и создать заново.
         # Однако, более корректно будет управлять связями.
 
-        # Сначала удалим все текущие ингредиенты для данного рецепта, если это обновление
-        # (при создании recipe.recipe_ingredients.all() будет пуст)
+        # Сначала удалим все текущие ингредиенты для данного рецепта,
+        # если это обновление (при создании recipe.recipe_ingredients.all() будет пуст)
         recipe.recipe_ingredients.all().delete()
 
         ingredient_amounts_to_create = []
@@ -177,7 +184,8 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             ingredient_amounts_to_create.append(
                 AmountIngredient(
                     recipe=recipe,
-                    ingredient=ingredient_data['id'],  # ingredient_data['id'] это уже объект Ingredient
+                    # ingredient_data['id'] это уже объект Ingredient
+                    ingredient=ingredient_data['id'],
                     amount=ingredient_data['amount']
                 )
             )
@@ -207,7 +215,8 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         instance.cooking_time = validated_data.get(
             'cooking_time', instance.cooking_time
         )
-        if 'image' in validated_data:  # Обновляем изображение, если оно передано
+        # Обновляем изображение, если оно передано
+        if 'image' in validated_data:
             instance.image = validated_data.get('image', instance.image)
         instance.save()
 
@@ -230,7 +239,8 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
 class RecipeMinifiedSerializer(serializers.ModelSerializer):
     """
     Укороченный сериализатор для рецепта.
-    Используется при добавлении в избранное/список покупок (согласно схеме `RecipeMinified`).
+    Используется при добавлении в избранное/список покупок
+    (согласно схеме `RecipeMinified`).
     """
     class Meta:
         model = Recipe
