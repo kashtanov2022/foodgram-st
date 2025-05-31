@@ -1,13 +1,11 @@
 from django.db import transaction
 from rest_framework import serializers
-# Установим эту библиотеку
 from drf_extra_fields.fields import Base64ImageField
 
-# Импортируем существующие модели и сериализаторы
 from .models import (
     Tag, Ingredient, Recipe, AmountIngredient, Favorite, ShoppingCart
 )
-from users.serializers import CustomUserSerializer  # Для отображения автора
+from users.serializers import CustomUserSerializer
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -15,7 +13,7 @@ class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
         fields = ('id', 'name', 'color', 'slug')
-        read_only_fields = fields  # Все поля только для чтения для этого API
+        read_only_fields = fields
 
 
 class IngredientSerializer(serializers.ModelSerializer):
@@ -23,20 +21,7 @@ class IngredientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ingredient
         fields = ('id', 'name', 'measurement_unit')
-        read_only_fields = fields  # Все поля только для чтения для этого API
-
-
-class TagInRecipeSerializer(serializers.ModelSerializer):
-    """Сериализатор для тегов при создании/обновлении рецепта
-    (ожидаем только ID)."""
-    # Мы будем использовать PrimaryKeyRelatedField в RecipeWriteSerializer
-    # Этот сериализатор может быть не нужен, если мы просто передаем список ID.
-    # Но если бы мы хотели валидировать что-то еще в теге,
-    # он мог бы пригодиться.
-    # Пока оставим для ясности, что теги идентифицируются по ID.
-    class Meta:
-        model = Tag
-        fields = ('id',)
+        read_only_fields = fields
 
 
 class IngredientInRecipeReadSerializer(serializers.ModelSerializer):
@@ -46,30 +31,19 @@ class IngredientInRecipeReadSerializer(serializers.ModelSerializer):
     measurement_unit = serializers.ReadOnlyField(
         source='ingredient.measurement_unit'
     )
-    # amount - уже есть в модели AmountIngredient
 
     class Meta:
-        model = AmountIngredient  # Используем промежуточную модель
+        model = AmountIngredient
         fields = ('id', 'name', 'measurement_unit', 'amount')
 
 
 class RecipeReadSerializer(serializers.ModelSerializer):
     """
     Сериализатор для чтения (отображения) рецептов.
-    Соответствует схеме `RecipeList`.
     """
     tags = TagSerializer(many=True, read_only=True)
-    # author = CustomUserSerializer(read_only=True)
-    # Используем сериализатор пользователя
-    # ingredients = IngredientInRecipeReadSerializer(
-    #     many=True, read_only=True, source='recipe_ingredients'
-    # )
-    # Заменил ingredients на SerializerMethodField
-    # для большей гибкости с source
-    ingredients = serializers.SerializerMethodField(read_only=True)
-    # Для отображения автора как объекта
     author = CustomUserSerializer(read_only=True)
-
+    ingredients = serializers.SerializerMethodField(read_only=True)
     is_favorited = serializers.SerializerMethodField(read_only=True)
     is_in_shopping_cart = serializers.SerializerMethodField(read_only=True)
 
@@ -79,26 +53,27 @@ class RecipeReadSerializer(serializers.ModelSerializer):
             'id', 'tags', 'author', 'ingredients', 'is_favorited',
             'is_in_shopping_cart', 'name', 'image', 'text', 'cooking_time'
         )
-        read_only_fields = fields  # Все поля только для чтения
+        read_only_fields = fields
 
-    def get_ingredients(self, obj):
-        """Получаем ингредиенты из промежуточной модели AmountIngredient."""
-        amounts = AmountIngredient.objects.filter(recipe=obj)
-        return IngredientInRecipeReadSerializer(amounts, many=True).data
+    def get_ingredients(self, obj: Recipe):
+        amounts = obj.recipe_ingredients.all()
+        return IngredientInRecipeReadSerializer(amounts, many=True, context=self.context).data # Pass context if needed by nested serializer
 
-    def get_is_favorited(self, obj):
+    def get_is_favorited(self, obj: Recipe):
         request = self.context.get('request')
-        if request is None or not request.user.is_authenticated:
+        if not request or not request.user.is_authenticated:
             return False
+        if hasattr(obj, 'is_favorited_annotated'):
+             return obj.is_favorited_annotated
         return Favorite.objects.filter(user=request.user, recipe=obj).exists()
 
-    def get_is_in_shopping_cart(self, obj):
+    def get_is_in_shopping_cart(self, obj: Recipe):
         request = self.context.get('request')
-        if request is None or not request.user.is_authenticated:
+        if not request or not request.user.is_authenticated:
             return False
-        return ShoppingCart.objects.filter(
-            user=request.user, recipe=obj
-        ).exists()
+        if hasattr(obj, 'is_in_shopping_cart_annotated'):
+            return obj.is_in_shopping_cart_annotated
+        return ShoppingCart.objects.filter(user=request.user, recipe=obj).exists()
 
 
 class IngredientAmountWriteSerializer(serializers.ModelSerializer):
@@ -107,11 +82,15 @@ class IngredientAmountWriteSerializer(serializers.ModelSerializer):
     Ожидает id ингредиента и его количество.
     """
     id = serializers.PrimaryKeyRelatedField(
-        queryset=Ingredient.objects.all()
+        queryset=Ingredient.objects.all(),
     )
     amount = serializers.IntegerField(
-        min_value=1
-    )  # Валидация из модели AmountIngredient тоже сработает
+        min_value=1,
+        error_messages={
+            'min_value': 'Количество должно быть не менее 1.',
+            'invalid': 'Количество должно быть целым числом.'
+        }
+    )
 
     class Meta:
         model = AmountIngredient
@@ -121,136 +100,115 @@ class IngredientAmountWriteSerializer(serializers.ModelSerializer):
 class RecipeWriteSerializer(serializers.ModelSerializer):
     """
     Сериализатор для создания и обновления рецептов.
-    Соответствует схемам `RecipeCreate` и `RecipeUpdate`.
     """
-    # Стандартный ImageField не работает с base64
-    # image = serializers.ImageField(use_url=True)
-    # Используем drf_extra_fields для base64
-    image = Base64ImageField(required=True)
+    image = Base64ImageField(required=True) # Image is still required
     ingredients = IngredientAmountWriteSerializer(
-        many=True, allow_empty=False
+        many=True,
+        allow_empty=False # At least one ingredient is required
     )
     tags = serializers.PrimaryKeyRelatedField(
         queryset=Tag.objects.all(),
         many=True,
-        allow_empty=False  # Рецепт должен иметь хотя бы один тег
+        required=False,      # <--- CHANGE 1: Make tags not strictly required for submission
+        allow_empty=True,    # <--- CHANGE 2: Allow an empty list of tags if 'tags' key is provided
+        # default=[]         # <--- CHANGE 3: (Optional but good practice) Provide a default empty list
     )
-    # author будет устанавливаться автоматически из request.user во view
+    # cooking_time is implicitly required by model. If you want to make it optional
+    # on the serializer level and have a model default, you can add `required=False`
+    # cooking_time = serializers.IntegerField(min_value=1, required=True) # Default, from model
 
     class Meta:
         model = Recipe
         fields = (
             'ingredients', 'tags', 'image', 'name', 'text', 'cooking_time'
         )
-        # id и author не включаем,
-        # т.к. id генерируется, а author берется из запроса
 
     def validate_ingredients(self, ingredients_data):
-        if not ingredients_data:
+        if not ingredients_data: # This check is redundant if allow_empty=False is on the field
             raise serializers.ValidationError(
                 "Список ингредиентов не может быть пустым."
             )
-        ingredient_ids = [item['id'] for item in ingredients_data]
-        if len(ingredient_ids) != len(set(ingredient_ids)):
+        ingredient_pks = []
+        for item_data in ingredients_data:
+            ingredient_instance = item_data.get('id')
+            if not isinstance(ingredient_instance, Ingredient):
+                raise serializers.ValidationError(
+                    {"ingredients": "Обнаружен некорректный ID ингредиента."}
+                )
+            ingredient_pks.append(ingredient_instance.pk)
+        if len(ingredient_pks) != len(set(ingredient_pks)):
             raise serializers.ValidationError(
-                "Ингредиенты в рецепте не должны повторяться."
+                {"ingredients": "Ингредиенты в рецепте не должны повторяться."}
             )
-        # Дополнительные валидации, если нужны
-        # (например, проверка существования
-        # ингредиентов, хотя PrimaryKeyRelatedField это уже делает)
         return ingredients_data
 
     def validate_tags(self, tags_data):
-        if not tags_data:
-            raise serializers.ValidationError(
-                "Список тегов не может быть пустым."
-            )
-        if len(tags_data) != len(set(tags_data)):
-            raise serializers.ValidationError(
-                "Теги в рецепте не должны повторяться."
-            )
-        return tags_data
+        # This validation is only called if 'tags' is present in the input data.
+        # If 'tags' is not sent by the frontend, this method won't be called for tags.
+        if tags_data: # Only validate if tags_data is not empty (it could be an empty list if allow_empty=True)
+            tag_pks = [tag.pk for tag in tags_data]
+            if len(tag_pks) != len(set(tag_pks)):
+                raise serializers.ValidationError(
+                    {"tags": "Теги в рецепте не должны повторяться."}
+                )
+        return tags_data # Return empty list or validated list
 
-    def _create_or_update_ingredients(self, recipe, ingredients_data):
-        """Вспомогательный метод для
-        создания/обновления ингредиентов рецепта."""
-        # Удаляем старые ингредиенты рецепта, если это обновление
-        # AmountIngredient.objects.filter(recipe=recipe).delete()
-        # Не нужно, если обновляем существующие
-        # Лучше обновить существующие или удалить/создать только изменившиеся.
-        # Но для простоты реализации (и если порядок не важен),
-        # можно удалить и создать заново.
-        # Однако, более корректно будет управлять связями.
-
-        # Сначала удалим все текущие ингредиенты для данного рецепта,
-        # если это обновление (при создании
-        # recipe.recipe_ingredients.all() будет пуст)
-        recipe.recipe_ingredients.all().delete()
-
+    def _set_ingredients(self, recipe, ingredients_data):
+        AmountIngredient.objects.filter(recipe=recipe).delete()
         ingredient_amounts_to_create = []
-        for ingredient_data in ingredients_data:
+        for ingredient_item in ingredients_data:
             ingredient_amounts_to_create.append(
                 AmountIngredient(
                     recipe=recipe,
-                    # ingredient_data['id'] это уже объект Ingredient
-                    ingredient=ingredient_data['id'],
-                    amount=ingredient_data['amount']
+                    ingredient=ingredient_item['id'],
+                    amount=ingredient_item['amount']
                 )
             )
-        AmountIngredient.objects.bulk_create(ingredient_amounts_to_create)
+        if ingredient_amounts_to_create:
+            AmountIngredient.objects.bulk_create(ingredient_amounts_to_create)
 
-    @transaction.atomic  # Обернем в транзакцию для атомарности
+    @transaction.atomic
     def create(self, validated_data):
+        # If 'tags' is not sent by frontend, and `required=False` + `default=[]` is used on the field,
+        # validated_data['tags'] will be an empty list here.
+        # If only `required=False` is used, and 'tags' is not sent, it won't be in validated_data.
         ingredients_data = validated_data.pop('ingredients')
-        tags_data = validated_data.pop('tags')
+        tags_data = validated_data.pop('tags', []) # Safely pop with a default empty list
 
-        recipe = Recipe.objects.create(**validated_data)
-        recipe.tags.set(tags_data)  # Устанавливаем теги
-        self._create_or_update_ingredients(
-            recipe, ingredients_data
-        )  # Создаем ингредиенты с количеством
-
+        recipe = Recipe.objects.create(**validated_data) # author will be injected by view
+        if tags_data: # Only set tags if they were provided and are not empty
+            recipe.tags.set(tags_data)
+        self._set_ingredients(recipe, ingredients_data)
         return recipe
 
     @transaction.atomic
     def update(self, instance, validated_data):
         ingredients_data = validated_data.pop('ingredients', None)
-        tags_data = validated_data.pop('tags', None)
+        tags_data = validated_data.pop('tags', None) # `None` indicates field wasn't in PATCH request
 
-        # Обновляем основные поля экземпляра рецепта
         instance.name = validated_data.get('name', instance.name)
         instance.text = validated_data.get('text', instance.text)
-        instance.cooking_time = validated_data.get(
-            'cooking_time', instance.cooking_time
-        )
-        # Обновляем изображение, если оно передано
+        instance.cooking_time = validated_data.get('cooking_time', instance.cooking_time)
         if 'image' in validated_data:
             instance.image = validated_data.get('image', instance.image)
         instance.save()
 
-        if tags_data is not None:
-            instance.tags.set(tags_data)
+        if tags_data is not None: # If 'tags' was part of the request payload
+            instance.tags.set(tags_data) # This will clear tags if tags_data is an empty list
 
         if ingredients_data is not None:
-            self._create_or_update_ingredients(instance, ingredients_data)
+            self._set_ingredients(instance, ingredients_data)
 
         return instance
 
     def to_representation(self, instance):
-        """При выводе после создания/обновления
-        используем RecipeReadSerializer."""
-        request = self.context.get('request')
         return RecipeReadSerializer(
-            instance, context={'request': request}
+            instance,
+            context=self.context
         ).data
 
 
 class RecipeMinifiedSerializer(serializers.ModelSerializer):
-    """
-    Укороченный сериализатор для рецепта.
-    Используется при добавлении в избранное/список покупок
-    (согласно схеме `RecipeMinified`).
-    """
     class Meta:
         model = Recipe
         fields = ('id', 'name', 'image', 'cooking_time')

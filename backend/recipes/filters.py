@@ -1,51 +1,40 @@
-import django_filters
+from django_filters import rest_framework as filters
 from .models import Recipe, Tag
-from users.models import User  # Для фильтрации по автору
 
 
-class RecipeFilter(django_filters.FilterSet):
-    """
-    Фильтр для рецептов.
-    Позволяет фильтровать по тегам (slug), автору (id),
-    наличию в избранном (is_favorited) и списке покупок (is_in_shopping_cart).
-    """
-    author = django_filters.ModelChoiceFilter(queryset=User.objects.all())
-    tags = django_filters.ModelMultipleChoiceFilter(
+class RecipeFilter(filters.FilterSet):
+    tags = filters.ModelMultipleChoiceFilter(
         field_name='tags__slug',
         to_field_name='slug',
         queryset=Tag.objects.all(),
-        conjoined=False,  # Используем OR для тегов (любой из перечисленных)
-        # Если нужно AND (все перечисленные), то conjoined=True
     )
-    is_favorited = django_filters.BooleanFilter(
-        method='filter_is_favorited'
-    )
-    is_in_shopping_cart = django_filters.BooleanFilter(
-        method='filter_is_in_shopping_cart'
-    )
+    # author = filters.ModelChoiceFilter(queryset=User.objects.all()) # If you filter by author ID
+
+    is_favorited = filters.BooleanFilter(method='filter_is_favorited')
+    is_in_shopping_cart = filters.BooleanFilter(method='filter_is_in_shopping_cart')
 
     class Meta:
         model = Recipe
-        fields = ['author', 'tags']
-        # 'is_favorited' и 'is_in_shopping_cart' обрабатываются методами
+        fields = ['tags', 'author', 'is_favorited', 'is_in_shopping_cart'] # Add author if you filter by it
 
     def filter_is_favorited(self, queryset, name, value):
         user = self.request.user
-        if user.is_authenticated and value:
-            return queryset.filter(favorited_by__user=user)
-        # Если value is False или пользователь не аутентифицирован,
-        # то не применяем этот фильтр активно (или можно отфильтровать те,
-        # что НЕ в избранном)
-        # Для простоты, если value=True и не аутентифицирован, вернет пустой
-        # queryset, т.к. аноним не может иметь избранного.
-        # Если value=False, то фильтр ничего не делает (показывает все).
-        # Если нужно явно показывать "не избранные", то:
-        # elif not value and user.is_authenticated:
-        #     return queryset.exclude(favorited_by__user=user)
-        return queryset
+        if user.is_authenticated and value: # If value is True
+            # Using the Favorite model:
+            return queryset.filter(favorited_by__user=user).distinct()
+            # If you were using a ManyToManyField directly on Recipe model for favorites:
+            # return queryset.filter(favorited_by_users=user).distinct() # Adjust field name
+        elif user.is_authenticated and not value: # If value is False
+            return queryset.exclude(favorited_by__user=user).distinct()
+        return queryset # Or handle unauthenticated users differently if needed
 
     def filter_is_in_shopping_cart(self, queryset, name, value):
         user = self.request.user
         if user.is_authenticated and value:
-            return queryset.filter(in_shopping_carts__user=user)
+            # Using the ShoppingCart model:
+            return queryset.filter(in_shopping_carts__user=user).distinct()
+            # If you were using a ManyToManyField directly on Recipe model for cart:
+            # return queryset.filter(in_shopping_cart_for_users=user).distinct() # Adjust field name
+        elif user.is_authenticated and not value:
+            return queryset.exclude(in_shopping_carts__user=user).distinct()
         return queryset

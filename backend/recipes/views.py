@@ -77,7 +77,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     # По умолчанию, автор или только чтение
     permission_classes = [IsAuthorOrReadOnly]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
-    filterset_class = RecipeFilter  # Используем кастомный фильтр
+    filterset_class = RecipeFilter
     # Поля, по которым можно сортировать
     ordering_fields = ['pub_date', 'name']
     ordering = ['-pub_date']  # Сортировка по умолчанию
@@ -99,17 +99,13 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = super().get_queryset().prefetch_related(
             'tags', 'author', 'recipe_ingredients__ingredient'
-        )  # Оптимизируем запросы
-
+        )
         user = self.request.user
         if user.is_authenticated:
-            # Аннотируем, есть ли рецепт в избранном у текущего пользователя
             favorited_subquery = Favorite.objects.filter(
                 user=user,
                 recipe=OuterRef('pk')
             )
-            # Аннотируем, есть ли рецепт в списке покупок
-            # у текущего пользователя
             shopping_cart_subquery = ShoppingCart.objects.filter(
                 user=user,
                 recipe=OuterRef('pk')
@@ -223,3 +219,18 @@ class RecipeViewSet(viewsets.ModelViewSet):
             'attachment; filename="shopping_list.txt"'
         )
         return response
+    
+    @action(
+        detail=True,
+        methods=['get'],
+        permission_classes=[permissions.AllowAny],
+        url_path='get-link'
+    )
+    def copy_link(self, request, pk=None):
+        recipe = self.get_object()
+        
+        frontend_path = f'/recipes/{recipe.id}/'
+        
+        full_frontend_url = request.build_absolute_uri(frontend_path)
+        
+        return Response({'short-link': full_frontend_url}, status=status.HTTP_200_OK)
