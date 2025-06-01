@@ -13,7 +13,10 @@ User = get_user_model()
 
 
 class Command(BaseCommand):
-    help = 'Loads initial data (tags, ingredients, users, recipes) into the database'
+    help = (
+        'Loads initial data (tags, ingredients, users, recipes) '
+        'into the database'
+    )
 
     DEFAULT_TAGS = [
         {'name': 'Завтрак', 'color': '#49B64E', 'slug': 'breakfast'},
@@ -114,7 +117,9 @@ class Command(BaseCommand):
                 f'Errors: {ingredients_errors_count}.'
             ))
         else:
-            self.stdout.write(self.style.WARNING('Skipped loading ingredients due to file issues.'))
+            self.stdout.write(self.style.WARNING(
+                'Skipped loading ingredients due to file issues.'
+            ))
 
         # 3. Загружаем пользователей
         self.stdout.write(self.style.HTTP_INFO('Loading users...'))
@@ -159,7 +164,9 @@ class Command(BaseCommand):
                 f'Errors: {users_errors_count}.'
             ))
         else:
-            self.stdout.write(self.style.WARNING('Skipped loading users due to file issues.'))
+            self.stdout.write(self.style.WARNING(
+                'Skipped loading users due to file issues.'
+            ))
 
 
         # 4. Загружаем рецепты
@@ -177,13 +184,19 @@ class Command(BaseCommand):
                 recipe_name = recipe_data.get('name')
 
                 if not author_username or not recipe_name:
-                    self.stdout.write(self.style.WARNING(f'Skipping recipe: missing author/name: {recipe_name or "N/A"}'))
+                    self.stdout.write(self.style.WARNING(
+                        f'Skipping recipe: missing author/name: '
+                        f'{recipe_name or "N/A"}'
+                    ))
                     recipes_errors_count += 1
                     continue
                 try:
                     author = User.objects.get(username=author_username)
                 except User.DoesNotExist:
-                    self.stdout.write(self.style.ERROR(f'Author "{author_username}" not found for "{recipe_name}". Skipping.'))
+                    self.stdout.write(self.style.ERROR(
+                        f'Author "{author_username}" not found for '
+                        f'"{recipe_name}". Skipping.'
+                    ))
                     recipes_errors_count += 1
                     continue
 
@@ -201,19 +214,36 @@ class Command(BaseCommand):
                     image_path_in_json = recipe_data.get('image')
                     if image_path_in_json:
                         image_filename = os.path.basename(image_path_in_json)
-                        source_image_full_path = os.path.join(images_base_dir_in_container, image_filename)
+                        source_image_full_path = os.path.join(
+                            images_base_dir_in_container, image_filename
+                        )
 
                         if os.path.exists(source_image_full_path):
                             try:
-                                with open(source_image_full_path, 'rb') as img_file:
-                                    recipe.image.save(image_filename, ImageFile(img_file), save=True)
+                                with open(
+                                    source_image_full_path, 'rb'
+                                ) as img_file:
+                                    recipe.image.save(
+                                        image_filename,
+                                        ImageFile(img_file),
+                                        save=True
+                                    )
                             except Exception as e_img:
-                                self.stdout.write(self.style.ERROR(f'Error saving image for recipe "{recipe_name}": {e_img}'))
+                                self.stdout.write(self.style.ERROR(
+                                    f'Error saving image for recipe '
+                                    f'"{recipe_name}": {e_img}'
+                                ))
                                 recipes_errors_count += 1
                         else:
-                            self.stdout.write(self.style.WARNING(f'Source image file not found: {source_image_full_path} for recipe "{recipe_name}". Skipping image.'))
+                            self.stdout.write(self.style.WARNING(
+                                f'Source image file not found: '
+                                f'{source_image_full_path} for recipe '
+                                f'"{recipe_name}". Skipping image.'
+                            ))
                     else:
-                        self.stdout.write(self.style.WARNING(f'No image path in JSON for recipe "{recipe_name}".'))
+                        self.stdout.write(self.style.WARNING(
+                            f'No image path in JSON for recipe "{recipe_name}".'
+                        ))
 
                     # Добавляем теги
                     tag_slugs = recipe_data.get('tags', [])
@@ -227,7 +257,8 @@ class Command(BaseCommand):
                                 recipe.tags.add(tag_obj)
                             except Tag.DoesNotExist:
                                 self.stdout.write(self.style.WARNING(
-                                    f'Tag "{slug}" not found for recipe "{recipe_name}". Skipping tag.'
+                                    f'Tag "{slug}" not found for recipe '
+                                    f'"{recipe_name}". Skipping tag.'
                                 ))
 
                     # Добавляем ингредиенты
@@ -239,7 +270,8 @@ class Command(BaseCommand):
 
                         if not all([ing_name, ing_unit, ing_amount]):
                             self.stdout.write(self.style.WARNING(
-                                f'Skipping ingredient in recipe "{recipe_name}" due to missing data: {ing_data}'
+                                f'Skipping ingredient in recipe "{recipe_name}" '
+                                f'due to missing data: {ing_data}'
                             ))
                             continue
                         try:
@@ -254,12 +286,14 @@ class Command(BaseCommand):
                             )
                         except Ingredient.DoesNotExist:
                             self.stdout.write(self.style.WARNING(
-                                f'Ingredient "{ing_name} ({ing_unit})" not found for recipe "{recipe_name}". Skipping ingredient.'
+                                f'Ingredient "{ing_name} ({ing_unit})" not found '
+                                f'for recipe "{recipe_name}". Skipping ingredient.'
                             ))
                         except Exception as e_amount:
-                             self.stdout.write(self.style.ERROR(
-                                f'Error adding ingredient "{ing_name}" to recipe "{recipe_name}": {e_amount}'
-                            ))
+                            self.stdout.write(self.style.ERROR(
+                                f'Error adding ingredient "{ing_name}" to recipe '
+                                f'"{recipe_name}": {e_amount}'
+                    ))
                     recipes_created_count += 1
                 else:
                     recipes_skipped_count += 1
@@ -270,8 +304,9 @@ class Command(BaseCommand):
                 f'Errors: {recipes_errors_count}.'
             ))
         else:
-            self.stdout.write(self.style.WARNING('Skipped loading recipes due to file issues.'))
-
+            self.stdout.write(self.style.WARNING(
+                'Skipped loading recipes due to file issues.'
+            ))
 
         self.stdout.write(
             self.style.SUCCESS('Initial data loading finished!')
