@@ -297,7 +297,7 @@ class Command(BaseCommand):
                                 f'Error adding ingredient '
                                 f'"{ing_name}" to recipe '
                                 f'"{recipe_name}": {e_amount}'
-                    ))
+                            ))
                     recipes_created_count += 1
                 else:
                     recipes_skipped_count += 1
