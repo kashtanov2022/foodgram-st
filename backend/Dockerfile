@@ -37,6 +37,11 @@ RUN python manage.py collectstatic --noinput --clear
 
 # Копируем данные для инициализации
 COPY data/ingredients.json /app/data/ingredients.json
+COPY data/users.json /app/data/users.json
+COPY data/recipes.json /app/data/recipes.json
 
 # Создаем директории для статики и медиа внутри /app/backend/
-RUN mkdir -p /app/backend/media_volume/
+COPY data/images/ /app/data/images/
+
+# Копируем начальные изображения рецептов
+COPY data/images/ /app/backend/media_volume/recipes/images/

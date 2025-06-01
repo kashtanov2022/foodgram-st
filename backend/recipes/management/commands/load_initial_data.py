@@ -3,14 +3,18 @@ import os
 
 from django.core.management.base import BaseCommand
 from django.conf import settings
-# Убедитесь, что модели импортируются правильно
-from recipes.models import Ingredient, Tag
+from django.contrib.auth import get_user_model
+from django.db import transaction
+from django.core.files.images import ImageFile
+
+from recipes.models import Ingredient, Tag, Recipe, AmountIngredient
+
+User = get_user_model()
 
 
 class Command(BaseCommand):
-    help = 'Loads initial data (ingredients and tags) into the database'
+    help = 'Loads initial data (tags, ingredients, users, recipes) into the database'
 
-    # Определим начальные теги здесь
     DEFAULT_TAGS = [
         {'name': 'Завтрак', 'color': '#49B64E', 'slug': 'breakfast'},
         {'name': 'Обед', 'color': '#E26C2D', 'slug': 'lunch'},
@@ -21,12 +25,36 @@ class Command(BaseCommand):
         {'name': 'Напитки', 'color': '#00BFFF', 'slug': 'drinks'},
     ]
 
+    def _load_json_data(self, file_name):
+        """Вспомогательный метод для загрузки данных из JSON файла."""
+        file_path = os.path.join(
+            settings.BASE_DIR.parent, 'data', file_name
+        )
+        if not os.path.exists(file_path):
+            self.stdout.write(self.style.ERROR(f'File not found: {file_path}'))
+            return None
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except json.JSONDecodeError:
+            self.stdout.write(self.style.ERROR(
+                f'Error decoding JSON from {file_path}.'
+            ))
+            return None
+        except Exception as e:
+            self.stdout.write(self.style.ERROR(
+                f'Error reading {file_path}: {e}'
+            ))
+            return None
+
+    @transaction.atomic
     def handle(self, *args, **options):
+        """Обработчик загрузки изначальных данных в базу."""
         self.stdout.write(
             self.style.SUCCESS('Starting data loading process...')
         )
 
-        # Загружаем теги
+        # 1. Загружаем теги
         self.stdout.write(self.style.HTTP_INFO('Loading tags...'))
         tags_created_count = 0
         tags_skipped_count = 0
@@ -39,9 +67,6 @@ class Command(BaseCommand):
             )
             if created:
                 tags_created_count += 1
-                self.stdout.write(
-                    self.style.SUCCESS(f'Tag "{tag.name}" created.')
-                )
             else:
                 tags_skipped_count += 1
         self.stdout.write(self.style.SUCCESS(
@@ -49,77 +74,205 @@ class Command(BaseCommand):
             f'Skipped: {tags_skipped_count}.'
         ))
 
-        # Загружаем ингредиенты
-        ingredients_file_path = os.path.join(
-            settings.BASE_DIR.parent, 'data', 'ingredients.json'
-        )
-
-        if not os.path.exists(ingredients_file_path):
-            self.stdout.write(
-                self.style.ERROR(f'File not found: {ingredients_file_path}')
-            )
-            self.stdout.write(self.style.ERROR(
-                'Please make sure ingredients.json is in the "data" '
-                'directory at the project root.'
-            ))
-            return
-
-        self.stdout.write(self.style.HTTP_INFO(
-            f'Loading ingredients from {ingredients_file_path}...'
-        ))
-        try:
-            with open(ingredients_file_path, 'r', encoding='utf-8') as f:
-                ingredients_data = json.load(f)
-        except json.JSONDecodeError:
-            self.stdout.write(self.style.ERROR(
-                f'Error decoding JSON from {ingredients_file_path}. '
-                'Make sure it is a valid JSON file.'
-            ))
-            return
-        except Exception as e:
-            self.stdout.write(self.style.ERROR(
-                f'An error occurred while opening or reading '
-                f'{ingredients_file_path}: {e}'
-            ))
-            return
-
+        # 2. Загружаем ингредиенты
+        self.stdout.write(self.style.HTTP_INFO('Loading ingredients...'))
+        ingredients_data_list = self._load_json_data('ingredients.json')
         ingredients_created_count = 0
         ingredients_skipped_count = 0
         ingredients_errors_count = 0
 
-        for item in ingredients_data:
-            name = item.get('name')
-            measurement_unit = item.get('measurement_unit')
+        if ingredients_data_list:
+            for item in ingredients_data_list:
+                name = item.get('name')
+                measurement_unit = item.get('measurement_unit')
 
-            if not name or not measurement_unit:
-                self.stdout.write(self.style.WARNING(
-                    f'Skipping ingredient due to missing name or '
-                    f'measurement_unit: {item}'
-                ))
-                ingredients_errors_count += 1
-                continue
+                if not name or not measurement_unit:
+                    self.stdout.write(self.style.WARNING(
+                        f'Skipping ingredient due to missing name or '
+                        f'measurement_unit: {item}'
+                    ))
+                    ingredients_errors_count += 1
+                    continue
+                try:
+                    _, created = Ingredient.objects.get_or_create(
+                        name=name,
+                        measurement_unit=measurement_unit,
+                    )
+                    if created:
+                        ingredients_created_count += 1
+                    else:
+                        ingredients_skipped_count += 1
+                except Exception as e:
+                    self.stdout.write(self.style.ERROR(
+                        f'Error creating ingredient "{name}": {e}'
+                    ))
+                    ingredients_errors_count += 1
+            self.stdout.write(self.style.SUCCESS(
+                f'Ingredients loading complete. '
+                f'Created: {ingredients_created_count}, '
+                f'Skipped: {ingredients_skipped_count}, '
+                f'Errors: {ingredients_errors_count}.'
+            ))
+        else:
+            self.stdout.write(self.style.WARNING('Skipped loading ingredients due to file issues.'))
 
-            try:
-                ingredient, created = Ingredient.objects.get_or_create(
-                    name=name.lower(),
-                    measurement_unit=measurement_unit.lower(),
+        # 3. Загружаем пользователей
+        self.stdout.write(self.style.HTTP_INFO('Loading users...'))
+        users_data_list = self._load_json_data('users.json')
+        users_created_count = 0
+        users_skipped_count = 0
+        users_errors_count = 0
+
+        if users_data_list:
+            for user_data in users_data_list:
+                username = user_data.get('username')
+                if not username:
+                    self.stdout.write(self.style.WARNING(
+                        f'Skipping user due to missing username: {user_data}'
+                    ))
+                    users_errors_count += 1
+                    continue
+                try:
+                    user, created = User.objects.get_or_create(
+                        username=username,
+                        defaults={
+                            'email': user_data.get('email'),
+                            'first_name': user_data.get('first_name', ''),
+                            'last_name': user_data.get('last_name', ''),
+                        }
+                    )
+                    if created:
+                        user.set_password(user_data.get('password'))
+                        user.save()
+                        users_created_count += 1
+                    else:
+                        users_skipped_count += 1
+                except Exception as e:
+                    self.stdout.write(self.style.ERROR(
+                        f'Error creating user "{username}": {e}'
+                    ))
+                    users_errors_count += 1
+            self.stdout.write(self.style.SUCCESS(
+                f'Users loading complete. '
+                f'Created: {users_created_count}, '
+                f'Skipped: {users_skipped_count}, '
+                f'Errors: {users_errors_count}.'
+            ))
+        else:
+            self.stdout.write(self.style.WARNING('Skipped loading users due to file issues.'))
+
+
+        # 4. Загружаем рецепты
+        self.stdout.write(self.style.HTTP_INFO('Loading recipes...'))
+        recipes_data_list = self._load_json_data('recipes.json')
+        recipes_created_count = 0
+        recipes_skipped_count = 0
+        recipes_errors_count = 0
+        
+        images_base_dir_in_container = '/app/data/images'
+
+        if recipes_data_list:
+            for recipe_data in recipes_data_list:
+                author_username = recipe_data.get('author_username')
+                recipe_name = recipe_data.get('name')
+
+                if not author_username or not recipe_name:
+                    self.stdout.write(self.style.WARNING(f'Skipping recipe: missing author/name: {recipe_name or "N/A"}'))
+                    recipes_errors_count += 1
+                    continue
+                try:
+                    author = User.objects.get(username=author_username)
+                except User.DoesNotExist:
+                    self.stdout.write(self.style.ERROR(f'Author "{author_username}" not found for "{recipe_name}". Skipping.'))
+                    recipes_errors_count += 1
+                    continue
+
+                recipe, created = Recipe.objects.get_or_create(
+                    author=author,
+                    name=recipe_name,
+                    defaults={
+                        'text': recipe_data.get('text', ''),
+                        'cooking_time': recipe_data.get('cooking_time', 1)
+                    }
                 )
-                if created:
-                    ingredients_created_count += 1
-                else:
-                    ingredients_skipped_count += 1
-            except Exception as e:
-                self.stdout.write(self.style.ERROR(
-                    f'Error creating ingredient "{name}": {e}'
-                ))
-                ingredients_errors_count += 1
 
-        self.stdout.write(self.style.SUCCESS(
-            f'Ingredients loading complete. '
-            f'Created: {ingredients_created_count}, '
-            f'Skipped (already exist): {ingredients_skipped_count}, '
-            f'Errors/Invalid entries: {ingredients_errors_count}.'
-        ))
+                if created:
+                    # Добавляем изображение
+                    image_path_in_json = recipe_data.get('image')
+                    if image_path_in_json:
+                        image_filename = os.path.basename(image_path_in_json)
+                        source_image_full_path = os.path.join(images_base_dir_in_container, image_filename)
+
+                        if os.path.exists(source_image_full_path):
+                            try:
+                                with open(source_image_full_path, 'rb') as img_file:
+                                    recipe.image.save(image_filename, ImageFile(img_file), save=True)
+                            except Exception as e_img:
+                                self.stdout.write(self.style.ERROR(f'Error saving image for recipe "{recipe_name}": {e_img}'))
+                                recipes_errors_count += 1
+                        else:
+                            self.stdout.write(self.style.WARNING(f'Source image file not found: {source_image_full_path} for recipe "{recipe_name}". Skipping image.'))
+                    else:
+                        self.stdout.write(self.style.WARNING(f'No image path in JSON for recipe "{recipe_name}".'))
+
+                    # Добавляем теги
+                    tag_slugs = recipe_data.get('tags', [])
+                    for slug in tag_slugs:
+                        try:
+                            tag_obj = Tag.objects.get(slug__iexact=slug)
+                            recipe.tags.add(tag_obj)
+                        except Tag.DoesNotExist:
+                            try:
+                                tag_obj = Tag.objects.get(name__iexact=slug)
+                                recipe.tags.add(tag_obj)
+                            except Tag.DoesNotExist:
+                                self.stdout.write(self.style.WARNING(
+                                    f'Tag "{slug}" not found for recipe "{recipe_name}". Skipping tag.'
+                                ))
+
+                    # Добавляем ингредиенты
+                    ingredients_in_recipe = recipe_data.get('ingredients', [])
+                    for ing_data in ingredients_in_recipe:
+                        ing_name = ing_data.get('name')
+                        ing_unit = ing_data.get('measurement_unit')
+                        ing_amount = ing_data.get('amount')
+
+                        if not all([ing_name, ing_unit, ing_amount]):
+                            self.stdout.write(self.style.WARNING(
+                                f'Skipping ingredient in recipe "{recipe_name}" due to missing data: {ing_data}'
+                            ))
+                            continue
+                        try:
+                            ingredient_obj = Ingredient.objects.get(
+                                name__iexact=ing_name,
+                                measurement_unit__iexact=ing_unit
+                            )
+                            AmountIngredient.objects.create(
+                                recipe=recipe,
+                                ingredient=ingredient_obj,
+                                amount=ing_amount
+                            )
+                        except Ingredient.DoesNotExist:
+                            self.stdout.write(self.style.WARNING(
+                                f'Ingredient "{ing_name} ({ing_unit})" not found for recipe "{recipe_name}". Skipping ingredient.'
+                            ))
+                        except Exception as e_amount:
+                             self.stdout.write(self.style.ERROR(
+                                f'Error adding ingredient "{ing_name}" to recipe "{recipe_name}": {e_amount}'
+                            ))
+                    recipes_created_count += 1
+                else:
+                    recipes_skipped_count += 1
+            self.stdout.write(self.style.SUCCESS(
+                f'Recipes loading complete. '
+                f'Created: {recipes_created_count}, '
+                f'Skipped: {recipes_skipped_count}, '
+                f'Errors: {recipes_errors_count}.'
+            ))
+        else:
+            self.stdout.write(self.style.WARNING('Skipped loading recipes due to file issues.'))
+
+
         self.stdout.write(
             self.style.SUCCESS('Initial data loading finished!')
         )

@@ -1,0 +1,99 @@
+[
+  {
+    "author_username": "chef_alex",
+    "name": "Блины с бананом и шоколадом",
+    "image": "blini_banana.png",
+    "text": "Восхитительные тонкие блины, фаршированные нежным бананом и политые растопленным шоколадом. Идеальный десерт или завтрак!",
+    "cooking_time": 25,
+    "tags": ["завтрак", "десерт"],
+    "ingredients": [
+      {"name": "молоко", "measurement_unit": "мл", "amount": 250},
+      {"name": "пшеничная мука", "measurement_unit": "г", "amount": 150},
+      {"name": "яйца куриные", "measurement_unit": "г", "amount": 100},
+      {"name": "сахар", "measurement_unit": "г", "amount": 200},
+      {"name": "бананы", "measurement_unit": "г", "amount": 200},
+      {"name": "шоколад черный горький", "measurement_unit": "г", "amount": 50}
+    ]
+  },
+  {
+    "author_username": "foodie_maria",
+    "name": "Классические русские блины",
+    "image": "blini_common.jpg",
+    "text": "Традиционные русские блины, тонкие и ажурные. Подавайте со сметаной, вареньем или медом.",
+    "cooking_time": 40,
+    "tags": ["завтрак", "перекус"],
+    "ingredients": [
+      {"name": "молоко", "measurement_unit": "мл", "amount": 500},
+      {"name": "пшеничная мука", "measurement_unit": "г", "amount": 250},
+      {"name": "яйца куриные", "measurement_unit": "г", "amount": 300},
+      {"name": "сахар", "measurement_unit": "г", "amount": 100},
+      {"name": "соль", "measurement_unit": "г", "amount": 0.5},
+      {"name": "растительное масло", "measurement_unit": "мл", "amount": 2}
+    ]
+  },
+  {
+    "author_username": "foodie_maria",
+    "name": "Блинчики с медом и орехами",
+    "image": "blini_honey.png",
+    "text": "Ароматные блинчики, щедро политые натуральным медом и посыпанные измельченными грецкими орехами.",
+    "cooking_time": 30,
+    "tags": ["десерт", "завтрак"],
+    "ingredients": [
+      {"name": "кефир", "measurement_unit": "мл", "amount": 200},
+      {"name": "пшеничная мука", "measurement_unit": "г", "amount": 100},
+      {"name": "яйца куриные", "measurement_unit": "г", "amount": 100},
+      {"name": "мед", "measurement_unit": "г", "amount": 50},
+      {"name": "грецкие орехи", "measurement_unit": "г", "amount": 30},
+      {"name": "сода", "measurement_unit": "г", "amount": 0.5}
+    ]
+  },
+  {
+    "author_username": "baker_sam",
+    "name": "Блины с клубникой и взбитыми сливками",
+    "image": "blini_strawberry.png",
+    "text": "Легкие и воздушные блины со свежей клубникой и нежными взбитыми сливками. Летнее наслаждение!",
+    "cooking_time": 35,
+    "tags": ["десерт", "перекус"],
+    "ingredients": [
+      {"name": "молоко", "measurement_unit": "мл", "amount": 200},
+      {"name": "пшеничная мука", "measurement_unit": "г", "amount": 120},
+      {"name": "яйца куриные", "measurement_unit": "г", "amount": 100},
+      {"name": "клубника", "measurement_unit": "г", "amount": 150},
+      {"name": "сливки 33-35%", "measurement_unit": "мл", "amount": 100},
+      {"name": "сахарная пудра", "measurement_unit": "г", "amount": 10}
+    ]
+  },
+  {
+    "author_username": "baker_sam",
+    "name": "Блинная башня с ягодами",
+    "image": "blini_tower.png",
+    "text": "Эффектная блинная башня, прослоенная кремом и украшенная свежими ягодами. Удивите своих гостей!",
+    "cooking_time": 60,
+    "tags": ["десерт", "выпечка"],
+    "ingredients": [
+      {"name": "молоко", "measurement_unit": "мл", "amount": 300},
+      {"name": "пшеничная мука", "measurement_unit": "г", "amount": 200},
+      {"name": "яйца куриные", "measurement_unit": "г", "amount": 300},
+      {"name": "сметана", "measurement_unit": "г", "amount": 200},
+      {"name": "сахар", "measurement_unit": "г", "amount": 400},
+      {"name": "ассорти ягодное", "measurement_unit": "г", "amount": 200}
+    ]
+  },
+  {
+    "author_username": "baker_sam",
+    "name": "Блины с творогом и изюмом",
+    "image": "blini_tvorog.png",
+    "text": "Сытные и вкусные блины с классической начинкой из творога с изюмом. Отличный вариант для завтрака или полдника.",
+    "cooking_time": 45,
+    "tags": ["завтрак", "выпечка"],
+    "ingredients": [
+      {"name": "молоко", "measurement_unit": "мл", "amount": 250},
+      {"name": "пшеничная мука", "measurement_unit": "г", "amount": 150},
+      {"name": "яйца куриные", "measurement_unit": "г", "amount": 200},
+      {"name": "творог", "measurement_unit": "г", "amount": 200},
+      {"name": "изюм", "measurement_unit": "г", "amount": 50},
+      {"name": "сахар", "measurement_unit": "г", "amount": 300},
+      {"name": "сахар ванильный", "measurement_unit": "г", "amount": 50}
+    ]
+  }
+]

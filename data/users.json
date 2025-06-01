@@ -1,0 +1,23 @@
+[
+  {
+    "username": "chef_alex",
+    "email": "alex@example.com",
+    "first_name": "Алексей",
+    "last_name": "Петров",
+    "password": "qwertyzxcvbn"
+  },
+  {
+    "username": "foodie_maria",
+    "email": "maria@example.com",
+    "first_name": "Мария",
+    "last_name": "Иванова",
+    "password": "qwertyzxcvbn"
+  },
+  {
+    "username": "baker_sam",
+    "email": "sam@example.com",
+    "first_name": "Семён",
+    "last_name": "Кузнецов",
+    "password": "qwertyzxcvbn"
+  }
+]
