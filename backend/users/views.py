@@ -9,7 +9,6 @@ from .serializers import (
     UserWithRecipesSerializer,
     UserAvatarSerializer
 )
-# Пагинатор будет использоваться из глобальных настроек DRF
 
 
 class CustomUserViewSet(DjoserUserViewSet):
@@ -23,11 +22,9 @@ class CustomUserViewSet(DjoserUserViewSet):
 
     def get_serializer_class(self):
         if self.action == 'subscriptions':
-            return UserWithRecipesSerializer  # Для списка подписок
+            return UserWithRecipesSerializer
         if self.action == 'avatar':
             return UserAvatarSerializer
-        # Для остальных действий (list, retrieve, me) Djoser
-        # будет использовать 'user' или 'current_user' из DJOSER['SERIALIZERS']
         return super().get_serializer_class()
 
     def get_permissions(self):
@@ -35,9 +32,6 @@ class CustomUserViewSet(DjoserUserViewSet):
             self.permission_classes = [IsAuthenticated]
         elif self.action in ['avatar', 'subscribe', 'subscriptions']:
             self.permission_classes = [IsAuthenticated]
-        # Для остальных (list, retrieve) используются permissions из
-        # DJOSER['PERMISSIONS']
-        # или 'rest_framework.permissions.IsAuthenticatedOrReadOnly'
         return super().get_permissions()
 
     @action(detail=False, methods=['get'], url_path='subscriptions')
@@ -46,8 +40,7 @@ class CustomUserViewSet(DjoserUserViewSet):
         Возвращает пользователей, на которых подписан текущий пользователь.
         """
         user = request.user
-        followed_users = User.objects.filter(
-            following__user=user)  # Пользователи, на которых подписан user
+        followed_users = User.objects.filter(following__user=user)
 
         page = self.paginate_queryset(followed_users)
         if page is not None:
@@ -65,8 +58,7 @@ class CustomUserViewSet(DjoserUserViewSet):
         Подписывает или отписывает текущего пользователя на/от пользователя
         с id.
         """
-        user_to_follow = self.get_object()  # Используем get_object() из
-        # DjoserUserViewSet, который берет юзера по id из URL
+        user_to_follow = self.get_object()
         current_user = request.user
 
         if current_user == user_to_follow:
@@ -84,8 +76,7 @@ class CustomUserViewSet(DjoserUserViewSet):
                 )
             Follow.objects.create(user=current_user, following=user_to_follow)
             serializer = UserWithRecipesSerializer(
-                user_to_follow, context={'request': request})  # Возвращаем
-            # данные о пользователе, на которого подписались
+                user_to_follow, context={'request': request})
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         elif request.method == 'DELETE':

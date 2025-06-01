@@ -1,5 +1,4 @@
 from django.contrib import admin
-# Для аннотации количества добавлений в избранное
 from django.db.models import Count
 from django.urls import reverse
 from django.utils.html import format_html
@@ -11,6 +10,7 @@ from .models import (
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
+    """Административный класс для модели Тег."""
     list_display = ('id', 'name', 'slug', 'color_display')
     search_fields = ('name', 'slug')
     prepopulated_fields = {'slug': ('name',)}
@@ -28,37 +28,39 @@ class TagAdmin(admin.ModelAdmin):
 
 @admin.register(Ingredient)
 class IngredientAdmin(admin.ModelAdmin):
+    """Административный класс для модели Ингредиент."""
     list_display = ('id', 'name', 'measurement_unit')
-    search_fields = ('name',)  # Поиск по названию (уже было)
+    search_fields = ('name',)
     list_filter = ('measurement_unit',)
 
 
 class AmountIngredientInline(admin.TabularInline):
+    """Встроенная модель для модели AmountIngredient."""
     model = AmountIngredient
     extra = 1
     min_num = 1
-    autocomplete_fields = ['ingredient']  # Удобный поиск ингредиентов
+    autocomplete_fields = ['ingredient']
 
 
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
+    """Административный класс для модели Рецепт."""
     list_display = (
         'id', 'name', 'author_link', 'cooking_time',
         'get_favorites_count', 'pub_date_formatted'
     )
     search_fields = (
         'name', 'author__username', 'author__email', 'text'
-    )  # Поиск по автору и названию
+    )
     list_filter = ('author', 'tags', 'pub_date')
     filter_horizontal = ('tags',)
     inlines = [AmountIngredientInline]
     readonly_fields = (
         'get_favorites_count_display',
-    )  # Отображение на странице редактирования рецепта
-    autocomplete_fields = ['author']  # Удобный поиск автора
+    )
+    autocomplete_fields = ['author']
 
     def get_queryset(self, request):
-        # Аннотируем количество добавлений в избранное для отображения в списке
         queryset = super().get_queryset(request).annotate(
             favorites_count_annotation=Count('favorited_by')
         )
@@ -76,13 +78,10 @@ class RecipeAdmin(admin.ModelAdmin):
         ordering='favorites_count_annotation'
     )
     def get_favorites_count(self, obj):
-        # Используем аннотированное значение
         return obj.favorites_count_annotation
 
     @admin.display(description='В избранном (на странице рецепта)')
     def get_favorites_count_display(self, obj):
-        # Это поле будет использоваться в readonly_fields
-        # на странице редактирования
         return Favorite.objects.filter(recipe=obj).count()
 
     get_favorites_count_display.short_description = (
@@ -96,6 +95,7 @@ class RecipeAdmin(admin.ModelAdmin):
 
 @admin.register(AmountIngredient)
 class AmountIngredientAdmin(admin.ModelAdmin):
+    """Административный класс для модели AmountIngredient."""
     list_display = ('id', 'recipe_link', 'ingredient_link', 'amount')
     search_fields = ('recipe__name', 'ingredient__name')
     list_filter = ('ingredient',)
@@ -116,6 +116,7 @@ class AmountIngredientAdmin(admin.ModelAdmin):
 
 @admin.register(Favorite)
 class FavoriteAdmin(admin.ModelAdmin):
+    """Административный класс для модели Favorite."""
     list_display = ('id', 'user_link', 'recipe_link', 'added_at')
     search_fields = ('user__username', 'recipe__name')
     list_filter = ('added_at',)
@@ -134,6 +135,7 @@ class FavoriteAdmin(admin.ModelAdmin):
 
 @admin.register(ShoppingCart)
 class ShoppingCartAdmin(admin.ModelAdmin):
+    """Административный класс для модели ShoppingCart."""
     list_display = ('id', 'user_link', 'recipe_link', 'added_at')
     search_fields = ('user__username', 'recipe__name')
     list_filter = ('added_at',)

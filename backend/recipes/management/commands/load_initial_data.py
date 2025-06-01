@@ -11,17 +11,14 @@ class Command(BaseCommand):
     help = 'Loads initial data (ingredients and tags) into the database'
 
     # Определим начальные теги здесь
-    # Вы можете расширить этот список или изменить цвета/слаги
     DEFAULT_TAGS = [
-        # Зеленый
         {'name': 'Завтрак', 'color': '#49B64E', 'slug': 'breakfast'},
-        {'name': 'Обед', 'color': '#E26C2D', 'slug': 'lunch'},  # Оранжевый
-        {'name': 'Ужин', 'color': '#8775D2', 'slug': 'dinner'},  # Фиолетовый
-        {'name': 'Перекус', 'color': '#F0DB4F', 'slug': 'snack'},  # Желтый
-        {'name': 'Десерт', 'color': '#FF69B4', 'slug': 'dessert'},  # Розовый
-        # Коричневый
+        {'name': 'Обед', 'color': '#E26C2D', 'slug': 'lunch'},
+        {'name': 'Ужин', 'color': '#8775D2', 'slug': 'dinner'},
+        {'name': 'Перекус', 'color': '#F0DB4F', 'slug': 'snack'},
+        {'name': 'Десерт', 'color': '#FF69B4', 'slug': 'dessert'},
         {'name': 'Выпечка', 'color': '#A52A2A', 'slug': 'baking'},
-        {'name': 'Напитки', 'color': '#00BFFF', 'slug': 'drinks'},  # Голубой
+        {'name': 'Напитки', 'color': '#00BFFF', 'slug': 'drinks'},
     ]
 
     def handle(self, *args, **options):
@@ -29,7 +26,7 @@ class Command(BaseCommand):
             self.style.SUCCESS('Starting data loading process...')
         )
 
-        # --- Загрузка Тегов ---
+        # Загружаем теги
         self.stdout.write(self.style.HTTP_INFO('Loading tags...'))
         tags_created_count = 0
         tags_skipped_count = 0
@@ -47,23 +44,15 @@ class Command(BaseCommand):
                 )
             else:
                 tags_skipped_count += 1
-                # self.stdout.write(
-                #     self.style.WARNING(
-                #         f'Tag "{tag.name}" already exists. Skipped.'
-                #     )
-                # )
         self.stdout.write(self.style.SUCCESS(
             f'Tags loading complete. Created: {tags_created_count}, '
             f'Skipped: {tags_skipped_count}.'
         ))
 
-        # --- Загрузка Ингредиентов ---
-        # Путь к файлу ingredients.json относительно папки data в корне проекта
+        # Загружаем ингредиенты
         ingredients_file_path = os.path.join(
             settings.BASE_DIR.parent, 'data', 'ingredients.json'
         )
-        # settings.BASE_DIR указывает на папку backend/,
-        # поэтому .parent для корня проекта
 
         if not os.path.exists(ingredients_file_path):
             self.stdout.write(
@@ -112,35 +101,13 @@ class Command(BaseCommand):
 
             try:
                 ingredient, created = Ingredient.objects.get_or_create(
-                    # Приводим имя к нижнему регистру для большей уникальности
                     name=name.lower(),
-                    # и единицу измерения тоже
                     measurement_unit=measurement_unit.lower(),
-                    # Если хотите сохранить оригинальный регистр, используйте:
-                    # name=name,
-                    # measurement_unit=measurement_unit,
-                    # defaults={
-                    #     'name': name,
-                    #     'measurement_unit': measurement_unit
-                    # }
-                    # Однако, это может привести к дублям типа "Соль" и "соль"
                 )
                 if created:
                     ingredients_created_count += 1
-                    # self.stdout.write(
-                    #     self.style.SUCCESS(
-                    #         f'Ingredient "{ingredient.name}" created.'
-                    #     )
-                    # )
                 else:
                     ingredients_skipped_count += 1
-                    # self.stdout.write(
-                    #     self.style.WARNING(
-                    #         f'Ingredient "{ingredient.name}, '
-                    #         f'{ingredient.measurement_unit}" '
-                    #         f'already exists. Skipped.'
-                    #     )
-                    # )
             except Exception as e:
                 self.stdout.write(self.style.ERROR(
                     f'Error creating ingredient "{name}": {e}'

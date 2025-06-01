@@ -59,7 +59,7 @@ class RecipeReadSerializer(serializers.ModelSerializer):
         amounts = obj.recipe_ingredients.all()
         return IngredientInRecipeReadSerializer(
             amounts, many=True, context=self.context
-        ).data  # Pass context if needed by nested serializer
+        ).data
 
     def get_is_favorited(self, obj: Recipe):
         request = self.context.get('request')
@@ -207,6 +207,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
 
 
 class RecipeMinifiedSerializer(serializers.ModelSerializer):
+    """Сериализатор для упрощенного вида рецептов."""
     class Meta:
         model = Recipe
         fields = ('id', 'name', 'image', 'cooking_time')

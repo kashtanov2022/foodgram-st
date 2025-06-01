@@ -1,5 +1,5 @@
 from django.db.models import Exists, OuterRef
-from django.http import HttpResponse  # Для скачивания списка покупок
+from django.http import HttpResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, permissions, status, filters
 from rest_framework.decorators import action
@@ -13,8 +13,8 @@ from .serializers import (
     TagSerializer, IngredientSerializer, RecipeReadSerializer,
     RecipeWriteSerializer, RecipeMinifiedSerializer
 )
-from .permissions import IsAuthorOrReadOnly  # Создадим этот permission
-from .filters import RecipeFilter  # Создадим этот класс фильтрации
+from .permissions import IsAuthorOrReadOnly
+from .filters import RecipeFilter
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
@@ -24,9 +24,7 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
     """
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
-    permission_classes = [permissions.AllowAny]  # Теги доступны всем
-    # Отключаем пагинацию для тегов, как указано в схеме
-    # (не было count/next/previous)
+    permission_classes = [permissions.AllowAny]
     pagination_class = None
 
 
@@ -38,22 +36,8 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     """
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
-    permission_classes = [permissions.AllowAny]  # Ингредиенты доступны всем
-    # Отключаем пагинацию для ингредиентов, как указано в схеме
+    permission_classes = [permissions.AllowAny]
     pagination_class = None
-
-    # Настройка поиска
-    # Для простого поиска по началу имени можно использовать SearchFilter.
-    # filter_backends = [filters.SearchFilter]
-    # ^ - поиск по началу строки, регистронезависимый по умолчанию
-    # search_fields = ['^name']
-
-    # Или, для большей гибкости и точного соответствия ТЗ
-    # (поиск по частичному вхождению в начале названия),
-    # можно создать кастомный фильтр или переопределить get_queryset.
-    # "Поиск по частичному вхождению в начале названия ингредиента."
-    # (openapi-schema.yml)
-    # Django ORM's `istartswith` подходит для этого.
 
     def get_queryset(self):
         """
@@ -72,30 +56,24 @@ class RecipeViewSet(viewsets.ModelViewSet):
     ViewSet для управления рецептами.
     """
     queryset = Recipe.objects.all()
-    # Определим в get_serializer_class
-    # serializer_class = RecipeReadSerializer
-    # По умолчанию, автор или только чтение
     permission_classes = [IsAuthorOrReadOnly]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_class = RecipeFilter
-    # Поля, по которым можно сортировать
     ordering_fields = ['pub_date', 'name']
-    ordering = ['-pub_date']  # Сортировка по умолчанию
+    ordering = ['-pub_date']
 
     def get_serializer_class(self):
         if self.action in ['create', 'update', 'partial_update']:
             return RecipeWriteSerializer
-        # Для ответа на эти действия
         if self.action in ['favorite', 'shopping_cart']:
             return RecipeMinifiedSerializer
-        return RecipeReadSerializer  # Для list, retrieve
+        return RecipeReadSerializer
 
     def perform_create(self, serializer):
         """При создании рецепта устанавливаем автора
         из текущего пользователя."""
         serializer.save(author=self.request.user)
 
-    # queryset для list с аннотациями is_favorited и is_in_shopping_cart
     def get_queryset(self):
         queryset = super().get_queryset().prefetch_related(
             'tags', 'author', 'recipe_ingredients__ingredient'
@@ -132,7 +110,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_400_BAD_REQUEST
                 )
             Favorite.objects.create(user=user, recipe=recipe)
-            # RecipeMinifiedSerializer
             serializer = self.get_serializer(recipe)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -163,7 +140,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_400_BAD_REQUEST
                 )
             ShoppingCart.objects.create(user=user, recipe=recipe)
-            # RecipeMinifiedSerializer
             serializer = self.get_serializer(recipe)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -184,14 +160,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def download_shopping_cart(self, request):
         """Скачивает список покупок в виде TXT файла."""
         user = request.user
-        # Собираем все ингредиенты из рецептов в списке покупок пользователя
         ingredients_summary = {}
-        # Получаем все объекты AmountIngredient
-        # для рецептов в корзине пользователя
         items_in_cart = AmountIngredient.objects.filter(
             recipe__in_shopping_carts__user=user
         ).select_related('ingredient')
 
+        # Собираем все ингредиенты из рецептов в списке покупок пользователя
         for item in items_in_cart:
             name = item.ingredient.name
             unit = item.ingredient.measurement_unit
@@ -227,6 +201,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         url_path='get-link'
     )
     def copy_link(self, request, pk=None):
+        """Сохраняет ссылку на рецепт в буфер обмена."""
         recipe = self.get_object()
 
         frontend_path = f'/recipes/{recipe.id}/'

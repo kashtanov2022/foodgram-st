@@ -1,10 +1,7 @@
 from django.core.validators import MinValueValidator, RegexValidator
 from django.db import models
 
-# Импортируем кастомную модель User из приложения users
-# Убедитесь, что приложение users будет выше recipes в INSTALLED_APPS
-# или используйте settings.AUTH_USER_MODEL
-from users.models import User  # Или используйте get_user_model позже
+from users.models import User
 
 
 class Tag(models.Model):
@@ -71,7 +68,7 @@ class Ingredient(models.Model):
 class Recipe(models.Model):
     """Модель рецепта."""
     author = models.ForeignKey(
-        User,  # Используем импортированную модель User
+        User,
         on_delete=models.CASCADE,
         related_name='recipes',
         verbose_name='Автор рецепта'
@@ -156,7 +153,7 @@ class AmountIngredient(models.Model):
 class Favorite(models.Model):
     """Модель для избранных рецептов пользователя."""
     user = models.ForeignKey(
-        User,  # Используем импортированную модель User
+        User,
         on_delete=models.CASCADE,
         related_name='favorites',
         verbose_name='Пользователь'
@@ -188,7 +185,7 @@ class Favorite(models.Model):
 class ShoppingCart(models.Model):
     """Модель для списка покупок пользователя."""
     user = models.ForeignKey(
-        User,  # Используем импортированную модель User
+        User,
         on_delete=models.CASCADE,
         related_name='shopping_cart',
         verbose_name='Пользователь'
