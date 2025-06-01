@@ -168,14 +168,13 @@ class Command(BaseCommand):
                 'Skipped loading users due to file issues.'
             ))
 
-
         # 4. Загружаем рецепты
         self.stdout.write(self.style.HTTP_INFO('Loading recipes...'))
         recipes_data_list = self._load_json_data('recipes.json')
         recipes_created_count = 0
         recipes_skipped_count = 0
         recipes_errors_count = 0
-        
+
         images_base_dir_in_container = '/app/data/images'
 
         if recipes_data_list:
@@ -242,7 +241,8 @@ class Command(BaseCommand):
                             ))
                     else:
                         self.stdout.write(self.style.WARNING(
-                            f'No image path in JSON for recipe "{recipe_name}".'
+                            f'No image path in JSON for recipe '
+                            f'"{recipe_name}".'
                         ))
 
                     # Добавляем теги
@@ -270,7 +270,8 @@ class Command(BaseCommand):
 
                         if not all([ing_name, ing_unit, ing_amount]):
                             self.stdout.write(self.style.WARNING(
-                                f'Skipping ingredient in recipe "{recipe_name}" '
+                                f'Skipping ingredient in '
+                                f'recipe "{recipe_name}" '
                                 f'due to missing data: {ing_data}'
                             ))
                             continue
@@ -286,12 +287,15 @@ class Command(BaseCommand):
                             )
                         except Ingredient.DoesNotExist:
                             self.stdout.write(self.style.WARNING(
-                                f'Ingredient "{ing_name} ({ing_unit})" not found '
-                                f'for recipe "{recipe_name}". Skipping ingredient.'
+                                f'Ingredient "{ing_name} '
+                                f'({ing_unit})" not found '
+                                f'for recipe "{recipe_name}". '
+                                f'Skipping ingredient.'
                             ))
                         except Exception as e_amount:
                             self.stdout.write(self.style.ERROR(
-                                f'Error adding ingredient "{ing_name}" to recipe '
+                                f'Error adding ingredient '
+                                f'"{ing_name}" to recipe '
                                 f'"{recipe_name}": {e_amount}'
                     ))
                     recipes_created_count += 1
