@@ -4,7 +4,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 
 from .filters import IngredientSearchFilter, RecipeFilter
@@ -40,6 +40,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
     filterset_class = RecipeFilter
 
     def get_permissions(self):
+        if self.action in ('list', 'retrieve'):
+            return [AllowAny()]
         if self.action in ('create',):
             return [IsAuthenticated()]
         return super().get_permissions()
@@ -131,3 +133,4 @@ class RecipeViewSet(viewsets.ModelViewSet):
         full_frontend_url = request.build_absolute_uri(frontend_path)
         
         return Response({'short-link': full_frontend_url}, status=status.HTTP_200_OK)
+

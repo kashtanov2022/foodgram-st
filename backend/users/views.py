@@ -2,7 +2,7 @@ from djoser.views import UserViewSet
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 
 from .models import Subscription, User
@@ -73,6 +73,11 @@ class CustomUserViewSet(UserViewSet):
         user = self.request.user
         
         if request.method == 'PUT':
+            if not request.data or 'avatar' not in request.data:
+                return Response(
+                    {'avatar': ['This field is required.']},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             serializer = AvatarSerializer(user, data=request.data, partial=True)
             serializer.is_valid(raise_exception=True)
             serializer.save()
@@ -83,10 +88,15 @@ class CustomUserViewSet(UserViewSet):
 
     def get_object(self):
         if self.kwargs.get('pk') == 'me':
+            if not self.request.user.is_authenticated:
+                from rest_framework.exceptions import NotAuthenticated
+                raise NotAuthenticated()
             return self.request.user
         return super().get_object()
 
     def get_permissions(self):
         if self.action == 'me':
             return [IsAuthenticated()]
+        if self.action == 'retrieve':
+            return [AllowAny()]
         return super().get_permissions()

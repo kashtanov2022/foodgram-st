@@ -50,19 +50,19 @@ class RecipeSerializer(serializers.ModelSerializer):
         model = Recipe
         fields = ('id', 'tags', 'author', 'ingredients', 'is_favorited',
                   'is_in_shopping_cart', 'name', 'image', 'text',
-                  'cooking_time')
+                  'cooking_time', 'pub_date')
 
     def get_is_favorited(self, obj):
         request = self.context.get('request')
-        if not request:
-            return False
-        return Favorite.objects.filter(user=request.user, recipe=obj).exists()
+        if request and request.user.is_authenticated:
+            return Favorite.objects.filter(user=request.user, recipe=obj).exists()
+        return False
 
     def get_is_in_shopping_cart(self, obj):
         request = self.context.get('request')
-        if not request:
-            return False
-        return ShoppingCart.objects.filter(user=request.user, recipe=obj).exists()
+        if request and request.user.is_authenticated:
+            return ShoppingCart.objects.filter(user=request.user, recipe=obj).exists()
+        return False
 
 
 class AddIngredientToRecipeSerializer(serializers.ModelSerializer):
@@ -88,12 +88,13 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
         queryset=Tag.objects.all(), many=True, required=False
     )
     ingredients = AddIngredientToRecipeSerializer(many=True)
-    image = Base64ImageField(required=False, allow_null=True)
+    image = Base64ImageField(required=True, allow_null=False)
 
     class Meta:
         model = Recipe
         fields = ('id', 'tags', 'ingredients', 'name', 'image', 'text',
-                  'cooking_time')
+                  'cooking_time', 'pub_date')
+        read_only_fields = ('pub_date',)
 
     def validate(self, data):
         ingredients = data.get('ingredients')

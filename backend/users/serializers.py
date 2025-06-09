@@ -8,11 +8,16 @@ from recipes.fields import Base64ImageField
 
 class AvatarSerializer(serializers.ModelSerializer):
     """Сериализатор для загрузки аватара."""
-    avatar = Base64ImageField(required=False, allow_null=True)
+    avatar = Base64ImageField(required=True, allow_null=False)
 
     class Meta:
         model = User
         fields = ('avatar',)
+
+    def validate_avatar(self, value):
+        if not value:
+            raise serializers.ValidationError('This field is required.')
+        return value
 
 
 class CustomUserCreateSerializer(UserCreateSerializer):
@@ -35,9 +40,9 @@ class CustomUserSerializer(UserSerializer):
     def get_is_subscribed(self, obj):
         """Проверяет, подписан ли текущий пользователь на просматриваемого."""
         request = self.context.get('request')
-        if not request:
-            return False
-        return Subscription.objects.filter(user=request.user, author=obj).exists()
+        if request and request.user.is_authenticated:
+            return Subscription.objects.filter(user=request.user, author=obj).exists()
+        return False
 
 
 class RecipeMinifiedSerializer(serializers.ModelSerializer):
