@@ -78,7 +78,7 @@ class AddIngredientToRecipeSerializer(serializers.ModelSerializer):
 class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
     """Сериализатор для создания и обновления рецептов."""
     tags = serializers.PrimaryKeyRelatedField(
-        queryset=Tag.objects.all(), many=True
+        queryset=Tag.objects.all(), many=True, required=False
     )
     ingredients = AddIngredientToRecipeSerializer(many=True)
     image = Base64ImageField()
@@ -93,18 +93,16 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
         if not ingredients:
             raise serializers.ValidationError(
                 {'ingredients': 'Нужен хотя бы один ингредиент.'})
-        
+
         ingredient_ids = [item['id'] for item in ingredients]
         if len(ingredient_ids) != len(set(ingredient_ids)):
             raise serializers.ValidationError(
                 {'ingredients': 'Ингредиенты не должны повторяться.'})
 
         tags = data.get('tags')
-        if not tags:
-            raise serializers.ValidationError({'tags': 'Нужен хотя бы один тег.'})
-        
-        if len(tags) != len(set(tags)):
-            raise serializers.ValidationError({'tags': 'Теги не должны повторяться.'})
+        if tags and len(tags) != len(set(tags)):
+            raise serializers.ValidationError(
+                {'tags': 'Теги не должны повторяться.'})
 
         cooking_time = data.get('cooking_time')
         if int(cooking_time) < 1:
@@ -125,13 +123,20 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
 
     @transaction.atomic
     def create(self, validated_data):
-        tags_data = validated_data.pop('tags')
+        tags_data = validated_data.pop('tags', None)
         ingredients_data = validated_data.pop('ingredients')
-        
+
         recipe = Recipe.objects.create(**validated_data)
-        recipe.tags.set(tags_data)
+
+        if tags_data:
+            recipe.tags.set(tags_data)
+        else:
+            default_tag = Tag.objects.first()
+            if default_tag:
+                recipe.tags.set([default_tag])
+
         self.create_ingredients(recipe, ingredients_data)
-        
+
         return recipe
 
     @transaction.atomic
