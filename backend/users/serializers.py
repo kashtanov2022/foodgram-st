@@ -3,6 +3,16 @@ from rest_framework import serializers
 
 from .models import Subscription, User
 from recipes.models import Recipe
+from recipes.fields import Base64ImageField
+
+
+class AvatarSerializer(serializers.ModelSerializer):
+    """Сериализатор для загрузки аватара."""
+    avatar = Base64ImageField(required=True)
+
+    class Meta:
+        model = User
+        fields = ('avatar',)
 
 
 class CustomUserCreateSerializer(UserCreateSerializer):
