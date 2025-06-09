@@ -13,35 +13,29 @@ RUN apt-get update && \
     libjpeg-dev \
     zlib1g-dev \
     libpng-dev \
+    netcat-traditional \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Создаем директорию приложения заранее, чтобы не было проблем с WORKDIR
-RUN mkdir -p /app/backend
-RUN mkdir -p /app/data
-
 # Устанавливаем рабочую директорию в контейнере
-WORKDIR /app/backend
+WORKDIR /app
 
-# Копируем файл зависимостей бэкенда (из корня контекста в /app/backend/requirements.txt)
-COPY requirements.txt /app/backend/requirements.txt
-
-# Устанавливаем зависимости Python
+# Копируем файл зависимостей и устанавливаем их
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Копируем весь код бэкенда (из папки backend/ в корне контекста)
-COPY backend/ /app/backend/
+# Копируем весь код проекта в рабочую директорию
+COPY ./backend /app/
 
-# Собираем статические файлы
-RUN python manage.py collectstatic --noinput --clear
+# --- ДОБАВЛЕНО: Копируем директорию с данными ---
+COPY ./data /app/data/
 
-# Копируем данные для инициализации
-COPY data/ingredients.json /app/data/ingredients.json
-COPY data/users.json /app/data/users.json
-COPY data/recipes.json /app/data/recipes.json
+# Копируем скрипт запуска и делаем его исполняемым
+COPY ./backend/entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
 
-# Создаем директории для статики и медиа внутри /app/backend/
-COPY data/images/ /app/data/images/
+# Указываем, что наш скрипт будет точкой входа
+ENTRYPOINT ["/app/entrypoint.sh"]
 
-# Копируем начальные изображения рецептов
-COPY data/images/ /app/backend/media_volume/recipes/images/
+# Команда по умолчанию для Gunicorn
+CMD ["gunicorn", "configuration.wsgi:application", "--bind", "0.0.0.0:8000"]

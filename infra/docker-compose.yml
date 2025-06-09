@@ -2,9 +2,9 @@ version: '3.8'
 
 volumes:
   postgres_data:
-  backend_static_volume:
-  backend_media_volume:
-  frontend_static_volume:
+  backend_static:
+  backend_media:
+  frontend_build:
 
 services:
   db:
@@ -22,7 +22,7 @@ services:
       dockerfile: Dockerfile
     container_name: foodgram_frontend_builder
     volumes:
-      - frontend_static_volume:/app/result_build/build
+      - frontend_build:/app/build
 
   backend:
     build:
@@ -31,12 +31,8 @@ services:
     container_name: foodgram_backend
     restart: unless-stopped
     volumes:
-      - ../backend/:/app/backend/
-      - backend_static_volume:/app/backend/staticfiles/
-      - backend_media_volume:/app/backend/media_volume/
-    command: ["gunicorn", "foodgram_backend.wsgi:application", "--bind", "0:8000"]
-    expose:
-      - "8000"
+      - backend_static:/app/static/
+      - backend_media:/app/media/
     depends_on:
       - db
     env_file:
@@ -44,16 +40,16 @@ services:
 
   nginx:
     image: nginx:1.25.4-alpine
-    container_name: foodgram_nginx_proxy
+    container_name: foodgram_nginx
     restart: unless-stopped
     ports:
       - "80:80"
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
-      - frontend_static_volume:/usr/share/nginx/html/static_frontend/
-      - backend_static_volume:/usr/share/nginx/html/static_django/
-      - backend_media_volume:/usr/share/nginx/html/media/
-      - ../docs/:/usr/share/nginx/html/api/docs/:ro 
+      - frontend_build:/usr/share/nginx/html/frontend/:ro
+      - backend_static:/usr/share/nginx/html/static/:ro
+      - backend_media:/usr/share/nginx/html/media/:ro
+      - ../docs/:/usr/share/nginx/html/api/docs/:ro
     depends_on:
       - backend
       - frontend
