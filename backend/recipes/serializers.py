@@ -54,13 +54,13 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     def get_is_favorited(self, obj):
         request = self.context.get('request')
-        if not request or request.user.is_anonymous:
+        if not request:
             return False
         return Favorite.objects.filter(user=request.user, recipe=obj).exists()
 
     def get_is_in_shopping_cart(self, obj):
         request = self.context.get('request')
-        if not request or request.user.is_anonymous:
+        if not request:
             return False
         return ShoppingCart.objects.filter(user=request.user, recipe=obj).exists()
 
@@ -74,6 +74,13 @@ class AddIngredientToRecipeSerializer(serializers.ModelSerializer):
         model = RecipeIngredient
         fields = ('id', 'amount')
 
+    def validate_amount(self, value):
+        if value < 1:
+            raise serializers.ValidationError(
+                'Количество ингредиента не может быть меньше 1.'
+            )
+        return value
+
 
 class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
     """Сериализатор для создания и обновления рецептов."""
@@ -81,7 +88,7 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
         queryset=Tag.objects.all(), many=True, required=False
     )
     ingredients = AddIngredientToRecipeSerializer(many=True)
-    image = Base64ImageField()
+    image = Base64ImageField(required=False, allow_null=True)
 
     class Meta:
         model = Recipe
@@ -128,12 +135,8 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
 
         recipe = Recipe.objects.create(**validated_data)
 
-        if tags_data:
-            recipe.tags.set(tags_data)
-        else:
-            default_tag = Tag.objects.first()
-            if default_tag:
-                recipe.tags.set([default_tag])
+        if tags_data is not None:
+             recipe.tags.set(tags_data)
 
         self.create_ingredients(recipe, ingredients_data)
 

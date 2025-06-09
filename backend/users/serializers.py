@@ -8,7 +8,7 @@ from recipes.fields import Base64ImageField
 
 class AvatarSerializer(serializers.ModelSerializer):
     """Сериализатор для загрузки аватара."""
-    avatar = Base64ImageField(required=True)
+    avatar = Base64ImageField(required=False, allow_null=True)
 
     class Meta:
         model = User
@@ -35,7 +35,7 @@ class CustomUserSerializer(UserSerializer):
     def get_is_subscribed(self, obj):
         """Проверяет, подписан ли текущий пользователь на просматриваемого."""
         request = self.context.get('request')
-        if not request or request.user.is_anonymous:
+        if not request:
             return False
         return Subscription.objects.filter(user=request.user, author=obj).exists()
 
