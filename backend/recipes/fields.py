@@ -1,4 +1,3 @@
-# backend/recipes/fields.py
 import base64
 import uuid
 
