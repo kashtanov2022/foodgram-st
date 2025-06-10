@@ -34,8 +34,8 @@ class Migration(migrations.Migration):
                 ('is_superuser', models.BooleanField(
                     default=False,
                     help_text=(
-                        'Designates that this user has all permissions without '
-                        'explicitly assigning them.'
+                        'Designates that this user has all permissions '
+                        'without explicitly assigning them.'
                     ),
                     verbose_name='superuser status'
                 )),
@@ -44,28 +44,30 @@ class Migration(migrations.Migration):
                         'unique': 'A user with that username already exists.'
                     },
                     help_text=(
-                        'Required. 150 characters or fewer. Letters, digits and '
-                        '@/./+/-/_ only.'
+                        'Required. 150 characters or fewer. '
+                        'Letters, digits and @/./+/-/_ only.'
                     ),
                     max_length=150,
                     unique=True,
                     validators=[
-                        django.contrib.auth.validators.UnicodeUsernameValidator()
+                        django.contrib.auth.validators
+                            .UnicodeUsernameValidator()
                     ],
                     verbose_name='username'
                 )),
                 ('is_staff', models.BooleanField(
                     default=False,
                     help_text=(
-                        'Designates whether the user can log into this admin site.'
+                        'Designates whether the user can log into '
+                        'this admin site.'
                     ),
                     verbose_name='staff status'
                 )),
                 ('is_active', models.BooleanField(
                     default=True,
                     help_text=(
-                        'Designates whether this user should be treated as active. '
-                        'Unselect this instead of deleting accounts.'
+                        'Designates whether this user should be treated '
+                        'as active. Unselect this instead of deleting accounts.'
                     ),
                     verbose_name='active'
                 )),
@@ -73,10 +75,11 @@ class Migration(migrations.Migration):
                     default=django.utils.timezone.now,
                     verbose_name='date joined'
                 )),
-                ('email', models.EmailField(max_length=254,
-                                            unique=True,
-                                            verbose_name='Адрес электронной почты'
-                                        )),
+                ('email', models.EmailField(
+                    max_length=254,
+                    unique=True,
+                    verbose_name='Адрес электронной почты'
+                )),
                 ('first_name', models.CharField(max_length=150,
                                                 verbose_name='Имя')),
                 ('last_name', models.CharField(max_length=150,
