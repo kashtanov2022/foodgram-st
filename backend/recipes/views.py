@@ -29,7 +29,7 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = IngredientSerializer
     filter_backends = (IngredientSearchFilter,)
     search_fields = ('^name',)
-    pagination_class = None 
+    pagination_class = None
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
@@ -57,7 +57,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def _add_or_remove_relation(self, request, pk, model):
         """Вспомогательный метод для добавления/удаления связи с рецептом."""
         recipe = get_object_or_404(Recipe, pk=pk)
-        relation_exists = model.objects.filter(user=request.user, recipe=recipe).exists()
+        relation_exists = model.objects.filter(
+            user=request.user, recipe=recipe
+        ).exists()
 
         if request.method == 'POST':
             if relation_exists:
@@ -114,9 +116,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
             unit = item['ingredients__measurement_unit']
             amount = item['total_amount']
             shopping_list += f"- {name} ({unit}) — {amount}\n"
-        
+
         response = HttpResponse(shopping_list, content_type='text/plain')
-        response['Content-Disposition'] = 'attachment; filename="shopping_list.txt"'
+        response['Content-Disposition'] = (
+            'attachment; filename="shopping_list.txt"'
+        )
         return response
 
     @action(
@@ -127,10 +131,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def get_link(self, request, pk=None):
         """Получает ссылку на текущий рецепт"""
         recipe = self.get_object()
-        
-        frontend_path = f'/recipes/{recipe.id}/'
-        
-        full_frontend_url = request.build_absolute_uri(frontend_path)
-        
-        return Response({'short-link': full_frontend_url}, status=status.HTTP_200_OK)
 
+        frontend_path = f'/recipes/{recipe.id}/'
+
+        full_frontend_url = request.build_absolute_uri(frontend_path)
+
+        return Response(
+            {'short-link': full_frontend_url}, status=status.HTTP_200_OK
+        )

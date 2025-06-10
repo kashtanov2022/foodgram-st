@@ -73,10 +73,12 @@ class Command(BaseCommand):
 
             image_path = DATA_PATH / 'images' / recipe_data['image']
             with open(image_path, 'rb') as img_file:
-                recipe.image.save(recipe_data['image'], File(img_file), save=True)
+                recipe.image.save(
+                    recipe_data['image'], File(img_file), save=True
+                )
 
             recipe.tags.set(tags)
-            
+
             recipe_ingredients = []
             for ing_data in ingredients_data:
                 ingredient = Ingredient.objects.get(

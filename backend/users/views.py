@@ -44,16 +44,22 @@ class CustomUserViewSet(UserViewSet):
             )
 
         if request.method == 'POST':
-            if Subscription.objects.filter(user=request.user, author=author).exists():
+            if Subscription.objects.filter(
+                user=request.user, author=author
+            ).exists():
                 return Response(
                     {'errors': 'Вы уже подписаны на этого автора.'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
             Subscription.objects.create(user=request.user, author=author)
-            serializer = SubscriptionSerializer(author, context={'request': request})
+            serializer = SubscriptionSerializer(
+                author, context={'request': request}
+            )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        subscription = Subscription.objects.filter(user=request.user, author=author)
+        subscription = Subscription.objects.filter(
+            user=request.user, author=author
+        )
         if not subscription.exists():
             return Response(
                 {'errors': 'Вы не были подписаны на этого автора.'},
@@ -71,14 +77,16 @@ class CustomUserViewSet(UserViewSet):
     def avatar(self, request):
         """Добавляет или удаляет аватар пользователя."""
         user = self.request.user
-        
+
         if request.method == 'PUT':
             if not request.data or 'avatar' not in request.data:
                 return Response(
                     {'avatar': ['This field is required.']},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            serializer = AvatarSerializer(user, data=request.data, partial=True)
+            serializer = AvatarSerializer(
+                user, data=request.data, partial=True
+            )
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)

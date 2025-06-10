@@ -54,13 +54,15 @@ class RecipeSerializer(serializers.ModelSerializer):
     def get_is_favorited(self, obj):
         request = self.context.get('request')
         if request and request.user.is_authenticated:
-            return Favorite.objects.filter(user=request.user, recipe=obj).exists()
+            return Favorite.objects.filter(
+                user=request.user, recipe=obj).exists()
         return False
 
     def get_is_in_shopping_cart(self, obj):
         request = self.context.get('request')
         if request and request.user.is_authenticated:
-            return ShoppingCart.objects.filter(user=request.user, recipe=obj).exists()
+            return ShoppingCart.objects.filter(
+                user=request.user, recipe=obj).exists()
         return False
 
 
@@ -114,7 +116,8 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
         cooking_time = data.get('cooking_time')
         if int(cooking_time) < 1:
             raise serializers.ValidationError(
-                {'cooking_time': 'Время приготовления должно быть не меньше 1.'})
+                {'cooking_time': 'Время приготовления должно быть не меньше 1.'}
+            )
 
         return data
 
@@ -130,16 +133,19 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
 
     @transaction.atomic
     def create(self, validated_data):
-        image_data = validated_data.pop('image', None) # Pop image data for validation
+        image_data = validated_data.pop(
+            'image', None)
         if not image_data:
-            raise serializers.ValidationError({'image': 'Это поле обязательно.'}) # Add required image validation here
+            raise serializers.ValidationError(
+                {'image': 'Это поле обязательно.'})
         tags_data = validated_data.pop('tags', None)
         ingredients_data = validated_data.pop('ingredients')
 
-        recipe = Recipe.objects.create(image=image_data, **validated_data) # Pass image for creation
+        recipe = Recipe.objects.create(
+            image=image_data, **validated_data)
 
         if tags_data is not None:
-             recipe.tags.set(tags_data)
+            recipe.tags.set(tags_data)
 
         self.create_ingredients(recipe, ingredients_data)
 
@@ -152,7 +158,7 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
 
         if tags_data is not None:
             instance.tags.set(tags_data)
-        
+
         if ingredients_data is not None:
             instance.ingredients.clear()
             self.create_ingredients(instance, ingredients_data)

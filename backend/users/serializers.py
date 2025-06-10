@@ -25,7 +25,9 @@ class CustomUserCreateSerializer(UserCreateSerializer):
 
     class Meta(UserCreateSerializer.Meta):
         model = User
-        fields = ('id', 'email', 'username', 'first_name', 'last_name', 'password')
+        fields = (
+            'id', 'email', 'username', 'first_name', 'last_name', 'password'
+        )
 
 
 class CustomUserSerializer(UserSerializer):
@@ -41,7 +43,9 @@ class CustomUserSerializer(UserSerializer):
         """Проверяет, подписан ли текущий пользователь на просматриваемого."""
         request = self.context.get('request')
         if request and request.user.is_authenticated:
-            return Subscription.objects.filter(user=request.user, author=obj).exists()
+            return Subscription.objects.filter(
+                user=request.user, author=obj
+            ).exists()
         return False
 
 
@@ -58,19 +62,25 @@ class SubscriptionSerializer(CustomUserSerializer):
     recipes_count = serializers.SerializerMethodField()
 
     class Meta(CustomUserSerializer.Meta):
-        fields = CustomUserSerializer.Meta.fields + ('recipes', 'recipes_count')
+        fields = (
+            CustomUserSerializer.Meta.fields + ('recipes', 'recipes_count')
+        )
         read_only_fields = ('email', 'username', 'first_name', 'last_name')
 
     def get_recipes(self, obj):
         """Получает ограниченное количество рецептов автора."""
-        recipes_limit = self.context.get('request').query_params.get('recipes_limit')
+        recipes_limit = self.context.get('request').query_params.get(
+            'recipes_limit'
+        )
         recipes = obj.recipes.all()
         if recipes_limit:
             try:
                 recipes = recipes[:int(recipes_limit)]
             except ValueError:
                 raise serializers.ValidationError(
-                    {'recipes_limit': 'Параметр recipes_limit должен быть целым числом.'}
+                    {
+                        'recipes_limit': 'Параметр recipes_limit должен быть целым числом.'
+                    }
                 )
         return RecipeMinifiedSerializer(recipes, many=True).data
 
