@@ -79,7 +79,8 @@ class SubscriptionSerializer(CustomUserSerializer):
             except ValueError:
                 raise serializers.ValidationError(
                     {
-                        'recipes_limit': 'Параметр recipes_limit должен быть целым числом.'
+                        'recipes_limit': 'Параметр recipes_limit должен '
+                                         'быть целым числом.'
                     }
                 )
         return RecipeMinifiedSerializer(recipes, many=True).data
