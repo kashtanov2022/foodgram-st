@@ -50,7 +50,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         model = Recipe
         fields = ('id', 'tags', 'author', 'ingredients', 'is_favorited',
                   'is_in_shopping_cart', 'name', 'image', 'text',
-                  'cooking_time', 'pub_date')
+                  'cooking_time')
 
     def get_is_favorited(self, obj):
         request = self.context.get('request')
@@ -88,12 +88,12 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
         queryset=Tag.objects.all(), many=True, required=False
     )
     ingredients = AddIngredientToRecipeSerializer(many=True)
-    image = Base64ImageField(required=True, allow_null=False)
+    image = Base64ImageField(allow_null=True, required=False)
 
     class Meta:
         model = Recipe
         fields = ('id', 'tags', 'ingredients', 'name', 'image', 'text',
-                  'cooking_time', 'pub_date')
+                  'cooking_time')
         read_only_fields = ('pub_date',)
 
     def validate(self, data):
@@ -131,10 +131,13 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
 
     @transaction.atomic
     def create(self, validated_data):
+        image_data = validated_data.pop('image', None) # Pop image data for validation
+        if not image_data:
+            raise serializers.ValidationError({'image': 'Это поле обязательно.'}) # Add required image validation here
         tags_data = validated_data.pop('tags', None)
         ingredients_data = validated_data.pop('ingredients')
 
-        recipe = Recipe.objects.create(**validated_data)
+        recipe = Recipe.objects.create(image=image_data, **validated_data) # Pass image for creation
 
         if tags_data is not None:
              recipe.tags.set(tags_data)

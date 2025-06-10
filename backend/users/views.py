@@ -87,11 +87,6 @@ class CustomUserViewSet(UserViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     def get_object(self):
-        if self.kwargs.get('pk') == 'me':
-            if not self.request.user.is_authenticated:
-                from rest_framework.exceptions import NotAuthenticated
-                raise NotAuthenticated()
-            return self.request.user
         return super().get_object()
 
     def get_permissions(self):

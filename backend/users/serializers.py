@@ -68,8 +68,10 @@ class SubscriptionSerializer(CustomUserSerializer):
         if recipes_limit:
             try:
                 recipes = recipes[:int(recipes_limit)]
-            except (ValueError, TypeError):
-                pass
+            except ValueError:
+                raise serializers.ValidationError(
+                    {'recipes_limit': 'Параметр recipes_limit должен быть целым числом.'}
+                )
         return RecipeMinifiedSerializer(recipes, many=True).data
 
     def get_recipes_count(self, obj):
